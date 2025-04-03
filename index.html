@@ -2483,145 +2483,145 @@ Center for Workers' Rights,47-2846161,501(c)(3),Sacramento,CA,$869688`
     }
     
     // Use the AMD pattern as recommended by ArcGIS
-    require([
-      "esri/Map", 
-      "esri/views/MapView",
-      "esri/Graphic",
-      "esri/layers/GraphicsLayer",
-      "esri/geometry/Point",
-      "esri/widgets/BasemapToggle",
-      "esri/widgets/Home",
-      "esri/geometry/Extent",
-      "esri/request"
-    ], (ArcGISMap, MapView, Graphic, GraphicsLayer, Point, BasemapToggle, Home, Extent, esriRequest) => {
-      debugLog("ArcGIS modules loaded successfully");
+require([
+  "esri/Map", 
+  "esri/views/MapView",
+  "esri/Graphic",
+  "esri/layers/GraphicsLayer",
+  "esri/geometry/Point",
+  "esri/widgets/BasemapToggle",
+  "esri/widgets/Home",
+  "esri/geometry/Extent",
+  "esri/request"
+], (Map, MapView, Graphic, GraphicsLayer, Point, BasemapToggle, Home, Extent, esriRequest) => {
+  debugLog("ArcGIS modules loaded successfully");
+  
+  try {
+    // Initialize the geocodeCache with combined data
+    geocodeCache = {...cityCoordinates, ...storedGeoCache};
+    
+    // Updated geocodeCity function using fetch with Nominatim API
+    async function geocodeCity(cityName, state = "CA") {
+      // Check cache first
+      if (geocodeCache[cityName]) {
+        // Validate cached coordinates
+        const coords = geocodeCache[cityName];
+        if (isValidCaliforniaCoordinate(coords)) {
+          debugLog(`Using cached coordinates for ${cityName}: [${coords}]`);
+          return coords;
+        } else {
+          debugLog(`Found invalid cached coordinates for ${cityName}: [${coords}], re-geocoding`);
+          // If invalid, continue to geocode
+        }
+      }
+      
+      debugLog(`Geocoding city: ${cityName}, ${state}`);
       
       try {
-        // Initialize the geocodeCache with combined data
-        geocodeCache = {...cityCoordinates, ...storedGeoCache};
+        // Use OpenStreetMap's Nominatim service
+        const encodedCity = encodeURIComponent(cityName);
+        const encodedState = encodeURIComponent(state);
         
-        // Updated geocodeCity function using fetch with Nominatim API
-        async function geocodeCity(cityName, state = "CA") {
-          // Check cache first
-          if (geocodeCache[cityName]) {
-            // Validate cached coordinates
-            const coords = geocodeCache[cityName];
-            if (isValidCaliforniaCoordinate(coords)) {
-              debugLog(`Using cached coordinates for ${cityName}: [${coords}]`);
-              return coords;
-            } else {
-              debugLog(`Found invalid cached coordinates for ${cityName}: [${coords}], re-geocoding`);
-              // If invalid, continue to geocode
-            }
+        const url = `https://nominatim.openstreetmap.org/search?city=${encodedCity}&state=${encodedState}&country=USA&format=json`;
+        
+        // Important: Add a small delay to respect rate limits
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const response = await fetch(url, {
+          headers: {
+            // It's good practice to add a user agent when using Nominatim
+            'User-Agent': 'CaliforniaLandConservationMap/1.0'
           }
-          
-          debugLog(`Geocoding city: ${cityName}, ${state}`);
-          
-          try {
-            // Use OpenStreetMap's Nominatim service
-            const encodedCity = encodeURIComponent(cityName);
-            const encodedState = encodeURIComponent(state);
-            
-            const url = `https://nominatim.openstreetmap.org/search?city=${encodedCity}&state=${encodedState}&country=USA&format=json`;
-            
-            // Important: Add a small delay to respect rate limits
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            const response = await fetch(url, {
-              headers: {
-                // It's good practice to add a user agent when using Nominatim
-                'User-Agent': 'CaliforniaLandConservationMap/1.0'
-              }
-            });
-            
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            if (data && data.length > 0) {
-              // Get longitude and latitude from first result
-              const coords = [parseFloat(data[0].lon), parseFloat(data[0].lat)];
-              
-              // Validate coordinates to make sure they're in California
-              if (isValidCaliforniaCoordinate(coords)) {
-                debugLog(`Successfully geocoded ${cityName}: [${coords}]`);
-                
-                // Save to cache
-                geocodeCache[cityName] = coords;
-                saveGeocodeCache();
-                
-                return coords;
-              } else {
-                debugLog(`Nominatim returned coordinates outside California for ${cityName}: [${coords}]`);
-                return null;
-              }
-            } else {
-              debugLog(`No geocoding results for: ${cityName}, ${state}`);
-              
-              // Fallback to hardcoded coordinates if available
-              if (cityCoordinates[cityName]) {
-                debugLog(`Using fallback hardcoded coordinates for ${cityName}`);
-                return cityCoordinates[cityName];
-              }
-              
-              return null;
-            }
-          } catch (error) {
-            debugLog(`Geocoding error for ${cityName}: ${error.message}`);
-            
-            // Fallback to hardcoded coordinates if available
-            if (cityCoordinates[cityName]) {
-              debugLog(`Using fallback hardcoded coordinates for ${cityName} after error`);
-              return cityCoordinates[cityName];
-            }
-            
-            return null;
-          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         
-        // Create map with basemap
-        const map = new ArcGISMap({
-          basemap: "topo-vector"
-        });
+        const data = await response.json();
         
-        // Create graphics layer for organizations with explicit visibility settings
-        graphicsLayer = new GraphicsLayer({
-          visible: true,  // Explicitly set to visible
-          opacity: 1,     // Full opacity
-          title: "Organizations"  // Give it a title for easier identification
-        });
-        
-        // Add it to the map and ensure it's added successfully
-        map.add(graphicsLayer);
-        debugLog(`Added graphics layer to map: ${graphicsLayer.id}`);
-        
-        // Create the map view
-        view = new MapView({
-          container: "viewDiv",
-          map: map,
-          center: [-119.4179, 36.7783], // Center on California
-          zoom: 6
-        });
-        
-        // Add basemap toggle
-        const basemapToggle = new BasemapToggle({
-          view: view,
-          nextBasemap: "satellite"
-        });
-        view.ui.add(basemapToggle, "bottom-right");
-        
-        // Define California extent
-        const caExtent = new Extent({
-          xmin: -124.4096,
-          ymin: 32.5343,
-          xmax: -114.1308,
-          ymax: 42.0095,
-          spatialReference: {
-            wkid: 4326
+        if (data && data.length > 0) {
+          // Get longitude and latitude from first result
+          const coords = [parseFloat(data[0].lon), parseFloat(data[0].lat)];
+          
+          // Validate coordinates to make sure they're in California
+          if (isValidCaliforniaCoordinate(coords)) {
+            debugLog(`Successfully geocoded ${cityName}: [${coords}]`);
+            
+            // Save to cache
+            geocodeCache[cityName] = coords;
+            saveGeocodeCache();
+            
+            return coords;
+          } else {
+            debugLog(`Nominatim returned coordinates outside California for ${cityName}: [${coords}]`);
+            return null;
           }
-        });
+        } else {
+          debugLog(`No geocoding results for: ${cityName}, ${state}`);
+          
+          // Fallback to hardcoded coordinates if available
+          if (cityCoordinates[cityName]) {
+            debugLog(`Using fallback hardcoded coordinates for ${cityName}`);
+            return cityCoordinates[cityName];
+          }
+          
+          return null;
+        }
+      } catch (error) {
+        debugLog(`Geocoding error for ${cityName}: ${error.message}`);
+        
+        // Fallback to hardcoded coordinates if available
+        if (cityCoordinates[cityName]) {
+          debugLog(`Using fallback hardcoded coordinates for ${cityName} after error`);
+          return cityCoordinates[cityName];
+        }
+        
+        return null;
+      }
+    }
+    
+    // Create map with basemap - FIXED HERE
+    const map = new Map({
+      basemap: "topo-vector"
+    });
+    
+    // Create graphics layer for organizations with explicit visibility settings
+    graphicsLayer = new GraphicsLayer({
+      visible: true,  // Explicitly set to visible
+      opacity: 1,     // Full opacity
+      title: "Organizations"  // Give it a title for easier identification
+    });
+    
+    // Add it to the map and ensure it's added successfully
+    map.add(graphicsLayer);
+    debugLog(`Added graphics layer to map: ${graphicsLayer.id}`);
+    
+    // Create the map view
+    view = new MapView({
+      container: "viewDiv",
+      map: map,
+      center: [-119.4179, 36.7783], // Center on California
+      zoom: 6
+    });
+    
+    // Add basemap toggle
+    const basemapToggle = new BasemapToggle({
+      view: view,
+      nextBasemap: "satellite"
+    });
+    view.ui.add(basemapToggle, "bottom-right");
+    
+    // Define California extent
+    const caExtent = new Extent({
+      xmin: -124.4096,
+      ymin: 32.5343,
+      xmax: -114.1308,
+      ymax: 42.0095,
+      spatialReference: {
+        wkid: 4326
+      }
+    });
         
         // Add home widget
         const homeWidget = new Home({
