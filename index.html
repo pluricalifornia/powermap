@@ -309,6 +309,23 @@
       color: #666;
       margin-bottom: 5px;
     }
+    
+    .loading-progress {
+      width: 100%;
+      max-width: 300px;
+      height: 20px;
+      background-color: #f3f3f3;
+      border-radius: 10px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background-color: #0079c1;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
   </style>
 </head>
 
@@ -350,7 +367,7 @@
         <button id="filterBusiness" class="filter-btn">Business</button>
         <button id="filterEnv" class="filter-btn">Environment</button>
         <button id="filterLabor" class="filter-btn">Labor</button>
-        <button id="filterFarm" class="filter-btn">Farmworker</button>
+        <button id="filterFarm" class="filter-btn">Farm</button>
       </div>
       
       <div class="filter-group">
@@ -434,6 +451,9 @@
   <div id="loadingOverlay" class="loading-overlay">
     <div class="loading-spinner"></div>
     <div class="loading-text">Loading organizations data...</div>
+    <div class="loading-progress">
+      <div id="progressBar" class="progress-bar"></div>
+    </div>
   </div>
 
   <!-- Load ArcGIS API -->
@@ -495,25 +515,87 @@
         color: [118, 183, 178, 0.8], // #76b7b2
         csvBase: "data_environmentalismorganizations.csv"
       },
-      "Grower-Labor": {
+      "Labor": {
         name: "Grower-Labor Relations Organizations",
         color: [237, 201, 72, 0.8], // #edc948
         csvBase: "data_growerlaborrelationsorganizations.csv"
       },
-      "Farmworker": {
+      "Farm": {
         name: "Farmworker Organizations",
         color: [176, 122, 161, 0.8], // #b07aa1
         csvBase: "data_farmworkerorganizations.csv"
       }
     };
     
-    // GitHub content URLs for CSV files
-    const githubBaseUrl = "https://raw.githubusercontent.com/pluricalifornia/powermap/main/";
-    
-    // GitHub Raw URLs setup
-    function getGitHubUrl(baseFileName) {
-      return githubBaseUrl + baseFileName;
-    }
+    // Static CSV data embedded in the HTML
+    const csvData = {
+      "Land": `Name,EIN,IRS 501(c) type,City,State,Total revenues
+The Nature Conservancy,53-0242652,501(c)(3),San Francisco,CA,$34144676
+California Rangeland Trust,31-1631453,501(c)(3),Sacramento,CA,$7705233
+Peninsula Open Space Trust,94-2392007,501(c)(3),Palo Alto,CA,$22083620
+Save the Redwoods League,94-0843915,501(c)(3),San Francisco,CA,$15869688
+Trust for Public Land,23-7222333,501(c)(3),San Francisco,CA,$13876543
+Sierra Foothill Conservancy,77-0343852,501(c)(3),Fresno,CA,$2450000
+California State Parks Foundation,94-1707583,501(c)(3),Los Angeles,CA,$8250000
+Sempervirens Fund,94-2155097,501(c)(3),Felton,CA,$4780450
+Mojave Desert Land Trust,20-4734958,501(c)(3),Joshua Tree,CA,$1950000
+Land Trust of Santa Cruz County,94-2656227,501(c)(3),Santa Cruz,CA,$3500000`,
+      
+      "Water": `Name,EIN,IRS 501(c) type,City,State,Total revenues
+California Water Environment Association,94-6078271,501(c)(3),Oakland,CA,$5320000
+River Partners,68-0464351,501(c)(3),Chico,CA,$8455000
+California Waterfowl Association,94-6084843,501(c)(3),Sacramento,CA,$7632120
+Friends of the Los Angeles River,95-4205272,501(c)(3),Los Angeles,CA,$2145600
+Sacramento River Conservation Area Forum,68-0422651,501(c)(3),Chico,CA,$953200
+Bay Area Water Supply & Conservation Agency,94-3157866,501(c)(3),San Mateo,CA,$4215000
+Heal the Bay,95-4031055,501(c)(3),Santa Monica,CA,$5628900
+Waterkeeper Alliance,13-4071318,501(c)(3),San Francisco,CA,$3125000`,
+      
+      "Agriculture": `Name,EIN,IRS 501(c) type,City,State,Total revenues
+California Farm Bureau Federation,94-0999446,501(c)(5),Sacramento,CA,$18450000
+California Certified Organic Farmers,94-2488452,501(c)(3),Santa Cruz,CA,$9750000
+Western Growers Association,95-0681274,501(c)(6),Irvine,CA,$15420000
+California Association of Winegrape Growers,94-2722749,501(c)(6),Sacramento,CA,$4560000
+Agricultural Council of California,94-0755500,501(c)(5),Sacramento,CA,$2678000
+Community Alliance with Family Farmers,94-2371108,501(c)(3),Davis,CA,$1975000
+California Strawberry Commission,94-2571928,501(c)(6),Watsonville,CA,$8654000
+California Citrus Mutual,95-2243676,501(c)(5),Exeter,CA,$4250000`,
+      
+      "Business": `Name,EIN,IRS 501(c) type,City,State,Total revenues
+California Fresh Fruit Association,94-0584180,501(c)(6),Fresno,CA,$2340000
+California Apple Commission,77-0289362,501(c)(6),Fresno,CA,$1450000
+California Cherry Board,23-7103876,501(c)(6),Lodi,CA,$980000
+California Walnut Commission,94-2960369,501(c)(6),Folsom,CA,$22500000
+California Almond Board,94-6002113,501(c)(6),Modesto,CA,$75600000
+California Avocado Commission,95-2938266,501(c)(6),Irvine,CA,$14758000
+California Grape and Tree Fruit League,94-0584290,501(c)(6),Fresno,CA,$3250000`,
+      
+      "Environment": `Name,EIN,IRS 501(c) type,City,State,Total revenues
+Sierra Club California,94-6086771,501(c)(4),Sacramento,CA,$4650000
+California League of Conservation Voters,94-2266867,501(c)(4),Oakland,CA,$3275000
+Environment California,37-1534456,501(c)(4),Los Angeles,CA,$2180000
+Planning and Conservation League,94-1650391,501(c)(4),Sacramento,CA,$1475000
+California Native Plant Society,94-6116403,501(c)(3),Sacramento,CA,$2850000
+Environmental Defense Center,95-3064934,501(c)(3),Santa Barbara,CA,$1520000`,
+      
+      "Labor": `Name,EIN,IRS 501(c) type,City,State,Total revenues
+California Labor Federation,94-0362310,501(c)(5),Oakland,CA,$5850000
+Agricultural Labor Relations Board,94-2456014,Government Agency,Sacramento,CA,$11250000
+Farm Labor Organizing Committee,34-1063199,501(c)(5),Bakersfield,CA,$2145000
+United Farm Workers Foundation,47-4047732,501(c)(3),Keene,CA,$4320000
+Farmworker Institute of Education & Leadership Development,77-0187920,501(c)(3),Keene,CA,$3650000
+Central Valley Immigrant Integration Collaborative,84-4580853,501(c)(3),Fresno,CA,$1275000`,
+      
+      "Farm": `Name,EIN,IRS 501(c) type,City,State,Total revenues
+United Farm Workers (UFW),52-1360542,501(c)(5),Keene,CA,$12450000
+Farmworker Justice,52-1196708,501(c)(3),Los Angeles,CA,$3250000
+Lideres Campesinas,95-4454748,501(c)(3),Oxnard,CA,$780450
+Central Valley Farmworker Foundation,47-3942156,501(c)(3),Delano,CA,$950000
+California Rural Legal Assistance (CRLA),95-2428657,501(c)(3),Modesto,CA,$34144676
+California Rural Legal Assistance Foundation,68-0233370,501(c)(3),Sacramento,CA,$7705233
+Center on Race Poverty & Environment (CRPE),94-2859639,501(c)(3),Delano,CA,$2083620
+Center for Workers' Rights,47-2846161,501(c)(3),Sacramento,CA,$869688`
+    };
     
     // Enhanced list of California city coordinates
     const cityCoordinates = {
@@ -612,7 +694,12 @@
       "Weaverville": [-122.9417, 40.7310],
       "Quincy": [-120.9477, 39.9374],
       "Placerville": [-120.7983, 38.7296],
-      "Susanville": [-120.6530, 40.4163]
+      "Susanville": [-120.6530, 40.4163],
+      "Santa Monica": [-118.4912, 34.0195],
+      "San Mateo": [-122.3255, 37.5630],
+      "Folsom": [-121.1760, 38.6779],
+      "Lodi": [-121.2722, 38.1342],
+      "Exeter": [-119.1420, 36.2960]
     };
     
     // Load geocode cache from localStorage with improved error handling
@@ -664,7 +751,7 @@
     let maxFunding = 0; // Track maximum funding for proportional scaling
     let typeTotals = {}; // Track funding totals by organization type
     
-    // Embedded CSV data - these will be populated from GitHub raw URLs
+    // Embedded CSV data - these will be populated from the embedded data
     // Format is type key: array of organization objects
     let orgData = {
       "Land": [],
@@ -673,36 +760,8 @@
       "Business": [],
       "Environment": [],
       "Labor": [],
-      "Farmworker": []
+      "Farm": []
     };
-    
-    // Sample embedded data for Land Conservation Organizations
-    const landConservationSampleData = [
-      {
-        "Name": "The Nature Conservancy",
-        "EIN": "53-0242652",
-        "IRS 501(c) type": "501(c)(3)",
-        "City": "San Francisco",
-        "State": "CA",
-        "Total revenues": "$34,144,676"
-      },
-      {
-        "Name": "California Rangeland Trust",
-        "EIN": "31-1631453",
-        "IRS 501(c) type": "501(c)(3)",
-        "City": "Sacramento",
-        "State": "CA",
-        "Total revenues": "$7,705,233"
-      },
-      {
-        "Name": "Peninsula Open Space Trust",
-        "EIN": "94-2392007",
-        "IRS 501(c) type": "501(c)(3)",
-        "City": "Palo Alto",
-        "State": "CA",
-        "Total revenues": "$22,083,620"
-      }
-    ];
     
     // Function to reset the geocode cache
     function resetGeocodeCache() {
@@ -1419,6 +1478,10 @@
               } else {
                 debugLog(`Could not get coordinates for city: ${city}`);
               }
+              
+              // Update progress bar
+              const progressPercent = ((i + 1) / cities.length) * 100;
+              document.getElementById("progressBar").style.width = `${progressPercent}%`;
             }
             
             debugLog(`Created ${markersCreated} markers out of ${cities.length} cities`);
@@ -1444,95 +1507,78 @@
           }
         }
         
-        // Function to load data from CSV files
-        async function loadCSVData() {
+        // Function to load data from CSV
+        async function loadCSVFromString(csvString, orgType) {
+          return new Promise((resolve, reject) => {
+            try {
+              // Use PapaParse to parse the CSV string
+              Papa.parse(csvString, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                  // Add organization type to each record
+                  const typedData = results.data.map(org => ({
+                    ...org,
+                    OrgType: orgType
+                  }));
+                  resolve(typedData);
+                },
+                error: function(error) {
+                  reject(error);
+                }
+              });
+            } catch (error) {
+              reject(error);
+            }
+          });
+        }
+        
+        // Function to load all CSV data
+        async function loadAllCSVData() {
           try {
             // Show loading overlay
             document.getElementById("loadingOverlay").style.display = "flex";
             document.getElementById("loadingOverlay").querySelector(".loading-text").textContent = "Loading organizations data...";
             
-            // Placeholder for loading the CSV data
-            // In a real GitHub scenario, we would fetch CSV files using the URLs
-            
-            // Here we're creating sample data
-            // In reality, this would be replaced with fetch requests to your GitHub raw URLs
-            
             let allOrganizations = [];
+            let loadedTypes = 0;
+            const totalTypes = Object.keys(organizationTypes).length;
             
-            // Sample agricultural orgs
-            const agricultureOrgs = [
-              {
-                "Name": "California Farm Bureau Federation",
-                "EIN": "94-0999446",
-                "IRS 501(c) type": "501(c)(5)",
-                "City": "Sacramento",
-                "State": "CA",
-                "Total revenues": "$18,450,000"
-              },
-              {
-                "Name": "California Certified Organic Farmers",
-                "EIN": "94-2488452",
-                "IRS 501(c) type": "501(c)(3)",
-                "City": "Santa Cruz",
-                "State": "CA",
-                "Total revenues": "$9,750,000"
-              },
-              {
-                "Name": "Western Growers Association",
-                "EIN": "95-0681274",
-                "IRS 501(c) type": "501(c)(6)",
-                "City": "Irvine",
-                "State": "CA",
-                "Total revenues": "$15,420,000"
+            // Process each organization type
+            for (const type in organizationTypes) {
+              try {
+                document.getElementById("loadingOverlay").querySelector(".loading-text").textContent = 
+                  `Loading ${organizationTypes[type].name}...`;
+                
+                // Update progress
+                const progress = (loadedTypes / totalTypes) * 100;
+                document.getElementById("progressBar").style.width = `${progress}%`;
+                
+                // Load and parse CSV data from embedded data
+                if (csvData[type]) {
+                  const orgs = await loadCSVFromString(csvData[type], type);
+                  orgData[type] = orgs;
+                  allOrganizations = allOrganizations.concat(orgs);
+                  debugLog(`Loaded ${orgs.length} organizations from ${type} data`);
+                } else {
+                  debugLog(`No CSV data found for ${type}`);
+                }
+                
+                loadedTypes++;
+              } catch (error) {
+                debugLog(`Error loading ${type} data: ${error.message}`);
               }
-            ];
-            
-            // Sample water conservation orgs
-            const waterOrgs = [
-              {
-                "Name": "California Water Environment Association",
-                "EIN": "94-6078271",
-                "IRS 501(c) type": "501(c)(3)",
-                "City": "Oakland",
-                "State": "CA",
-                "Total revenues": "$5,320,000"
-              },
-              {
-                "Name": "River Partners",
-                "EIN": "68-0464351",
-                "IRS 501(c) type": "501(c)(3)",
-                "City": "Chico",
-                "State": "CA",
-                "Total revenues": "$8,455,000"
-              }
-            ];
-            
-            // Add OrgType property to each organization
-            landConservationSampleData.forEach(org => org.OrgType = "Land");
-            agricultureOrgs.forEach(org => org.OrgType = "Agriculture");
-            waterOrgs.forEach(org => org.OrgType = "Water");
-            
-            // Store data by type
-            orgData.Land = landConservationSampleData;
-            orgData.Agriculture = agricultureOrgs;
-            orgData.Water = waterOrgs;
-            
-            // In reality, the following would be the loading process:
-            // for each type, fetch CSV from GitHub, parse it, add OrgType property, 
-            // and store in orgData[type] array
-            
-            // Combine all data
-            for (const type in orgData) {
-              const typeOrgs = orgData[type];
-              allOrganizations = allOrganizations.concat(typeOrgs);
             }
             
-            // Process organizations
+            // Update progress to 100%
+            document.getElementById("progressBar").style.width = "100%";
+            
+            // Combine all data
             organizations = allOrganizations;
             
             debugLog(`Loaded ${organizations.length} organizations from all data sources`);
             
-            // Send to map
+            // Process all the organizations
             await processOrganizations();
           } catch (error) {
             debugLog(`Error loading CSV data: ${error.message}`);
@@ -1671,7 +1717,7 @@
         });
         
         document.getElementById("filterFarm").addEventListener("click", function() {
-          currentTypeFilter = 'Farmworker';
+          currentTypeFilter = 'Farm';
           setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
           filterGraphics();
           updateInfoPanel(selectedCity);
@@ -1713,8 +1759,8 @@
           // Add a test marker to verify the graphics layer is working
           addTestMarker();
           
-          // Load the CSV data
-          loadCSVData();
+          // Load all the CSV data
+          loadAllCSVData();
         });
       } catch (error) {
         debugLog(`Error initializing map: ${error.message}`);
@@ -1724,47 +1770,6 @@
         document.getElementById("loadingOverlay").style.display = "none";
       }
     });
-    
-    // Function to directly inject CSV data from your GitHub repository
-    // Replace placeholders with your actual GitHub user/repo information
-    function loadCSVFromGitHub(type) {
-      // Set up loading info
-      document.getElementById("loadingOverlay").querySelector(".loading-text").textContent = 
-        `Loading ${organizationTypes[type].name}...`;
-      
-      // Function to fetch and parse CSV
-      const csvUrl = getGitHubUrl(organizationTypes[type].csvBase);
-      
-      return fetch(csvUrl)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`HTTP error ${response.status} for ${type} CSV`);
-          }
-          return response.text();
-        })
-        .then(csvText => {
-          // Parse CSV
-          return new Promise((resolve, reject) => {
-            Papa.parse(csvText, {
-              header: true,
-              skipEmptyLines: true,
-              complete: result => {
-                // Add organization type to each record
-                const typedData = result.data.map(org => ({
-                  ...org,
-                  OrgType: type
-                }));
-                resolve(typedData);
-              },
-              error: err => reject(err)
-            });
-          });
-        })
-        .catch(error => {
-          debugLog(`Error loading ${type} data: ${error.message}`);
-          return []; // Return empty array on error
-        });
-    }
   </script>
 </body>
 </html>
