@@ -309,1599 +309,6 @@
       color: #666;
       margin-bottom: 5px;
     }
-  </style>
-</head>
-
-<body>
-  <div id="viewDiv"></div>
-  
-  <div id="infoPanel">
-    <div class="title-bar">
-      <h2 style="margin: 0; font-size: 1.2em;">California Land Stakeholder Power Map</h2>
-    </div>
-    
-    <div class="stats-container">
-      <div class="stat-box">
-        <div class="stat-value" id="orgCount">0</div>
-        <div class="stat-label">Organizations</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value" id="cityCount">0</div>
-        <div class="stat-label">Cities</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value" id="fundingTotal">$0</div>
-        <div class="stat-label">Total Funding</div>
-      </div>
-    </div>
-    
-    <div class="tab-container">
-      <button class="tab-button active" onclick="openTab(event, 'filterTab')">Filters</button>
-      <button class="tab-button" onclick="openTab(event, 'statsTab')">Statistics</button>
-    </div>
-    
-    <div id="filterTab" class="tab-content active">
-      <div class="filter-group">
-        <div class="filter-label">Organization Type:</div>
-        <button id="filterAllTypes" class="filter-btn active">All Types</button>
-        <button id="filterLand" class="filter-btn">Land</button>
-        <button id="filterWater" class="filter-btn">Water</button>
-        <button id="filterAgri" class="filter-btn">Agriculture</button>
-        <button id="filterBusiness" class="filter-btn">Business</button>
-        <button id="filterEnv" class="filter-btn">Environment</button>
-        <button id="filterLabor" class="filter-btn">Labor</button>
-        <button id="filterFarm" class="filter-btn">Farmworker</button>
-      </div>
-      
-      <div class="filter-group">
-        <div class="filter-label">Funding Range:</div>
-        <button id="filterAll" class="filter-btn active">All</button>
-        <button id="filterLarge" class="filter-btn">&gt; $10M</button>
-        <button id="filterMed" class="filter-btn">$1-10M</button>
-        <button id="filterSmall" class="filter-btn">&lt; $1M</button>
-      </div>
-    </div>
-    
-    <div id="statsTab" class="tab-content">
-      <div id="typeBreakdown"></div>
-      <div id="fundingBreakdown"></div>
-    </div>
-    
-    <div id="selectedCity" style="margin: 15px 0; font-weight: bold;"></div>
-    <div id="orgsList" style="margin-top: 10px;"></div>
-  </div>
-  
-  <div id="legendPanel">
-    <h3 style="margin-top: 0; margin-bottom: 10px;">Legend</h3>
-    
-    <div class="legend-section">
-      <h4 style="margin: 10px 0;">Organization Types</h4>
-      <div class="legend-item">
-        <div class="legend-color" style="background-color: #4e79a7;"></div>
-        <div class="legend-text">Land Conservation</div>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color" style="background-color: #59a14f;"></div>
-        <div class="legend-text">Water Conservation</div>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color" style="background-color: #f28e2b;"></div>
-        <div class="legend-text">Agricultural Organizations</div>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color" style="background-color: #e15759;"></div>
-        <div class="legend-text">Grower Business Leagues</div>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color" style="background-color: #76b7b2;"></div>
-        <div class="legend-text">Environmental Organizations</div>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color" style="background-color: #edc948;"></div>
-        <div class="legend-text">Grower-Labor Relations</div>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color" style="background-color: #b07aa1;"></div>
-        <div class="legend-text">Farmworker Organizations</div>
-      </div>
-    </div>
-    
-    <div class="size-legend">
-      <div>
-        <div style="margin-bottom: 10px; font-weight: bold;">Funding Size</div>
-        <div class="size-circles">
-          <div class="size-circle" style="width: 24px; height: 24px;"></div>
-          <div class="size-circle" style="width: 16px; height: 16px;"></div>
-          <div class="size-circle" style="width: 10px; height: 10px;"></div>
-        </div>
-        <div class="size-labels">
-          <div class="size-label">&gt;$20M</div>
-          <div class="size-label">$5-20M</div>
-          <div class="size-label">&lt;$5M</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <div id="debugPanel">
-    <h3 style="margin-top: 0; margin-bottom: 10px;">Debug Info</h3>
-    <div id="debugContent"></div>
-  </div>
-  
-  <button id="resetViewBtn">Reset View</button>
-  <button id="resetCacheBtn">Reset Cache</button>
-  
-  <div id="loadingOverlay" class="loading-overlay">
-    <div class="loading-spinner"></div>
-    <div class="loading-text">Loading organizations data...</div>
-  </div>
-
-  <!-- Load ArcGIS API -->
-  <script src="https://js.arcgis.com/4.32/"></script>
-
-  <script>
-    // Tab navigation
-    function openTab(evt, tabName) {
-      const tabContents = document.getElementsByClassName("tab-content");
-      for (let i = 0; i < tabContents.length; i++) {
-        tabContents[i].classList.remove("active");
-      }
-      
-      const tabButtons = document.getElementsByClassName("tab-button");
-      for (let i = 0; i < tabButtons.length; i++) {
-        tabButtons[i].classList.remove("active");
-      }
-      
-      document.getElementById(tabName).classList.add("active");
-      evt.currentTarget.classList.add("active");
-    }
-    
-    // Debug function to log information
-    function debugLog(message) {
-      const debugContent = document.getElementById("debugContent");
-      const logItem = document.createElement("div");
-      logItem.textContent = message;
-      debugContent.appendChild(logItem);
-      console.log(message);
-      
-      // Auto-scroll to bottom of debug panel
-      debugContent.scrollTop = debugContent.scrollHeight;
-    }
-    
-    // Define organization types and their colors
-    const organizationTypes = {
-      "Land": {
-        name: "Land Conservation Organizations",
-        color: [78, 121, 167, 0.8], // #4e79a7
-        csvBase: "data_landconservationorganizations.csv"
-      },
-      "Water": {
-        name: "Water Conservation Organizations",
-        color: [89, 161, 79, 0.8], // #59a14f
-        csvBase: "data_waterconservationorganizations.csv"
-      },
-      "Agriculture": {
-        name: "Agricultural Organizations",
-        color: [242, 142, 43, 0.8], // #f28e2b
-        csvBase: "data_agriculturalorganizations.csv"
-      },
-      "Business": {
-        name: "Grower Business Leagues",
-        color: [225, 87, 89, 0.8], // #e15759
-        csvBase: "data_growerbusinessleagues.csv"
-      },
-      "Environment": {
-        name: "Environmental Organizations",
-        color: [118, 183, 178, 0.8], // #76b7b2
-        csvBase: "data_environmentalismorganizations.csv"
-      },
-      "Labor": {
-        name: "Grower-Labor Relations Organizations",
-        color: [237, 201, 72, 0.8], // #edc948
-        csvBase: "data_growerlaborrelationsorganizations.csv"
-      },
-      "Farmworker": {
-        name: "Farmworker Organizations",
-        color: [176, 122, 161, 0.8], // #b07aa1
-        csvBase: "data_farmworkerorganizations.csv"
-      }
-    };
-    
-    // GitHub content URLs for CSV files
-    const githubBaseUrl = "https://raw.githubusercontent.com/pluricalifornia/powermap/main/";
-    
-    // GitHub Raw URLs setup
-    function getGitHubUrl(baseFileName) {
-      return githubBaseUrl + baseFileName;
-    }
-    
-    // Enhanced list of California city coordinates
-    const cityCoordinates = {
-      // Major cities
-      "Bakersfield": [-119.0187, 35.3733],
-      "Fresno": [-119.7871, 36.7378],
-      "Sacramento": [-121.4944, 38.5816],
-      "Los Angeles": [-118.2437, 34.0522],
-      "Oxnard": [-119.1792, 34.1975],
-      "Modesto": [-120.9969, 37.6391],
-      "Delano": [-119.2471, 35.7688],
-      "Tehachapi": [-118.4489, 35.1322],
-      "Glendora": [-117.8651, 34.1361],
-      "Winton": [-120.6107, 37.3855],
-      "Keene": [-118.5573, 35.2271],
-      "Visalia": [-119.2921, 36.3302],
-      "Brawley": [-115.5311, 32.9787],
-      "Ventura": [-119.2290, 34.2746],
-      "Coachella": [-116.1733, 33.6803],
-      "Chico": [-121.8375, 39.7285],
-      "Indio": [-116.2023, 33.7206],
-      "El Centro": [-115.5310, 32.7920],
-      "Davis": [-121.7405, 38.5449],
-      "San Francisco": [-122.4194, 37.7749],
-      "San Diego": [-117.1611, 32.7157],
-      "San Jose": [-121.8853, 37.3382],
-      "Santa Rosa": [-122.7141, 38.4404],
-      "Stockton": [-121.2908, 37.9577],
-      "Riverside": [-117.3755, 33.9806],
-      "Santa Ana": [-117.8703, 33.7455],
-      "Irvine": [-117.8265, 33.6846],
-      "Oakland": [-122.2712, 37.8044],
-      "Anaheim": [-117.9145, 33.8366],
-      "Long Beach": [-118.1937, 33.7701],
-      "Santa Barbara": [-119.6982, 34.4208],
-      "Berkeley": [-122.2730, 37.8715],
-      "Salinas": [-121.6555, 36.6777],
-      "San Bernardino": [-117.2898, 34.1083],
-      "Santa Clara": [-121.9552, 37.3541],
-      "Santa Cruz": [-122.0308, 36.9741],
-      "Watsonville": [-121.7568, 36.9102],
-      "Merced": [-120.4829, 37.3022],
-      "Redding": [-122.3917, 40.5865],
-      "San Luis Obispo": [-120.6596, 35.2828],
-      "Napa": [-122.2855, 38.2975],
-      "Eureka": [-124.1636, 40.8021],
-      "Palm Springs": [-116.5453, 33.8303],
-      "Monterey": [-121.8947, 36.6002],
-      "Ukiah": [-123.2078, 39.1502],
-      "Moreno Valley": [-117.2298, 33.9425],
-      "San Marcos": [-117.1661, 33.1434],
-      "Mountain View": [-122.0838, 37.3861],
-      "Felton": [-122.0733, 37.0513],
-      "Clovis": [-119.7026, 36.8252],
-      "Walnut Grove": [-121.5102, 38.2427],
-      "Brentwood": [-121.6961, 37.9319],
-      "Parlier": [-119.5271, 36.6116],
-      "Orange Cove": [-119.3143, 36.6246],
-      "Calistoga": [-122.5797, 38.5787],
-      "Palo Alto": [-122.1430, 37.4419],
-      "Joshua Tree": [-116.3130, 34.1348],
-      "Half Moon Bay": [-122.4286, 37.4636],
-      "Petaluma": [-122.6367, 38.2324],
-      "Sebastopol": [-122.8239, 38.4022],
-      "Mill Valley": [-122.5450, 37.9060],
-      "San Rafael": [-122.5311, 37.9735],
-      "Healdsburg": [-122.8673, 38.6104],
-      "Truckee": [-120.1833, 39.3278],
-      "Auburn": [-121.0769, 38.8966],
-      "Nevada City": [-121.0149, 39.2616],
-      "Grass Valley": [-121.0613, 39.2191],
-      "Fort Bragg": [-123.8053, 39.4457],
-      "Mendocino": [-123.7995, 39.3076],
-      "Point Reyes Station": [-122.8055, 38.0686],
-      "San Juan Capistrano": [-117.6625, 33.5017],
-      "Laguna Beach": [-117.7831, 33.5427],
-      "South Lake Tahoe": [-119.9771, 38.9399],
-      "Bishop": [-118.3997, 37.3615],
-      "Mammoth Lakes": [-118.9724, 37.6485],
-      "Carmel": [-121.9233, 36.5552],
-      "Big Sur": [-121.7569, 36.2704],
-      "Ojai": [-119.2426, 34.4480],
-      "Malibu": [-118.7798, 34.0259],
-      "Idyllwild": [-116.7114, 33.7456],
-      "Julian": [-116.6035, 33.0761],
-      "Borrego Springs": [-116.3689, 33.2553],
-      "Sonoma": [-122.4580, 38.2919],
-      "Avalon": [-118.3262, 33.3428],
-      "Alturas": [-120.5424, 41.4871],
-      "Yreka": [-122.6344, 41.7354],
-      "Weed": [-122.3864, 41.4227],
-      "Mount Shasta": [-122.3108, 41.3098],
-      "Dunsmuir": [-122.2719, 41.2087],
-      "Crescent City": [-124.2026, 41.7558],
-      "Arcata": [-124.0874, 40.8665],
-      "Weaverville": [-122.9417, 40.7310],
-      "Quincy": [-120.9477, 39.9374],
-      "Placerville": [-120.7983, 38.7296],
-      "Susanville": [-120.6530, 40.4163]
-    };
-    
-    // Load geocode cache from localStorage with improved error handling
-    let storedGeoCache = {};
-    try {
-      debugLog("Attempting to load geocode cache from localStorage...");
-      const cachedCoordinates = localStorage.getItem('landConservationMapGeoCache');
-      
-      if (cachedCoordinates) {
-        try {
-          // Parse the JSON data
-          const parsedCache = JSON.parse(cachedCoordinates);
-          
-          // Validate that it's an object with expected format
-          if (typeof parsedCache === 'object' && parsedCache !== null) {
-            storedGeoCache = parsedCache;
-            const cityCount = Object.keys(storedGeoCache).length;
-            debugLog(`Successfully loaded ${cityCount} cached coordinates from localStorage`);
-            
-            // Log a few examples to verify format
-            const sampleCities = Object.keys(storedGeoCache).slice(0, 3);
-            sampleCities.forEach(city => {
-              debugLog(`Sample: ${city} => [${storedGeoCache[city]}]`);
-            });
-          } else {
-            debugLog("WARNING: Cached coordinates not in expected format, ignoring cache");
-          }
-        } catch (parseError) {
-          debugLog(`Error parsing cached coordinates: ${parseError.message}`);
-          // Clear corrupted cache
-          localStorage.removeItem('landConservationMapGeoCache');
-        }
-      } else {
-        debugLog("No geocode cache found in localStorage");
-      }
-    } catch (e) {
-      debugLog(`Error accessing localStorage: ${e.message}`);
-    }
-    
-    // Global variables
-    let view;
-    let graphicsLayer;
-    let organizations = [];
-    let cityGroups = {};
-    let currentFilter = 'all';
-    let currentTypeFilter = 'all';
-    let selectedCity = null;
-    let geocodeCache = {}; // Added geocodeCache as a global variable
-    let maxFunding = 0; // Track maximum funding for proportional scaling
-    let typeTotals = {}; // Track funding totals by organization type
-    
-    // Embedded CSV data - these will be populated from GitHub raw URLs
-    // Format is type key: array of organization objects
-    let orgData = {
-      "Land": [],
-      "Water": [],
-      "Agriculture": [],
-      "Business": [],
-      "Environment": [],
-      "Labor": [],
-      "Farmworker": []
-    };
-    
-    // This has been removed since we're now loading actual data from GitHub
-    
-    // Function to reset the geocode cache
-    function resetGeocodeCache() {
-      try {
-        localStorage.removeItem('landConservationMapGeoCache');
-        debugLog("Geocode cache reset successfully");
-        return true;
-      } catch (e) {
-        debugLog(`Error resetting geocode cache: ${e.message}`);
-        return false;
-      }
-    }
-    
-    // Function to validate if coordinates are within California
-    function isValidCaliforniaCoordinate(coordinates) {
-      // Rough bounding box for California
-      const [lon, lat] = coordinates;
-      return (
-        lon >= -124.5 && lon <= -114.0 && // Longitude bounds for California
-        lat >= 32.5 && lat <= 42.0        // Latitude bounds for California
-      );
-    }
-    
-    // Function to bulk clear existing invalid coordinates
-    function cleanupInvalidCachedCoordinates() {
-      let removedCount = 0;
-      
-      debugLog("Checking cached coordinates for validity...");
-      
-      for (const city in geocodeCache) {
-        const coords = geocodeCache[city];
-        if (!isValidCaliforniaCoordinate(coords)) {
-          debugLog(`Removing invalid coordinates for ${city}: [${coords}]`);
-          delete geocodeCache[city];
-          removedCount++;
-        }
-      }
-      
-      if (removedCount > 0) {
-        debugLog(`Removed ${removedCount} invalid coordinates from cache`);
-        saveGeocodeCache();
-      } else {
-        debugLog("No invalid coordinates found in cache");
-      }
-    }
-    
-    // Function to save geocode cache to localStorage with improved error handling
-    function saveGeocodeCache() {
-      try {
-        // Only save if we actually have coordinates to save
-        if (geocodeCache && Object.keys(geocodeCache).length > 0) {
-          // Convert to JSON
-          const cacheJson = JSON.stringify(geocodeCache);
-          
-          // Sanity check the size (localStorage has limits)
-          if (cacheJson.length > 5000000) {
-            debugLog("WARNING: Geocode cache too large for localStorage, trimming...");
-            // If needed, implement trimming logic here
-          }
-          
-          // Save to localStorage
-          localStorage.setItem('landConservationMapGeoCache', cacheJson);
-          debugLog(`Saved ${Object.keys(geocodeCache).length} coordinates to localStorage`);
-        } else {
-          debugLog("No geocode data to save to localStorage");
-        }
-      } catch (e) {
-        debugLog(`Error saving coordinates cache: ${e.message}`);
-      }
-    }
-    
-    // Function to parse revenue values
-    function parseRevenue(revenueStr) {
-      if (!revenueStr) return 0;
-      return parseInt(revenueStr.toString().replace(/\$|,/g, '')) || 0;
-    }
-    
-    // Function to format revenue for display
-    function formatRevenue(value) {
-      if (value >= 1000000000) {
-        return `${(value / 1000000000).toFixed(1)}B`;
-      } else if (value >= 1000000) {
-        return `${(value / 1000000).toFixed(1)}M`;
-      } else if (value >= 1000) {
-        return `${(value / 1000).toFixed(1)}K`;
-      }
-      return `${value}`;
-    }
-    
-    // Get marker size based on revenue
-    function getMarkerSize(revenue) {
-      if (revenue > 20000000) return 24;
-      if (revenue > 10000000) return 20;
-      if (revenue > 5000000) return 16;
-      if (revenue > 1000000) return 12;
-      return 10;
-    }
-    
-    // Get type for an organization
-    function getOrgType(org) {
-      return org.OrgType || "Unknown";
-    }
-    
-    // Get color for an organization based on type
-    function getTypeColor(orgType) {
-      return organizationTypes[orgType]?.color || [128, 128, 128, 0.8]; // Default gray
-    }
-
-function loadCSVFromGitHub(type) {
-  const csvUrl = getGitHubUrl(organizationTypes[type].csvBase);
-  console.log(`Attempting to fetch: ${csvUrl}`);
-  
-  return fetch(csvUrl)
-    .then(response => {
-      console.log(`Response for ${type}: status=${response.status}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status} for ${type} CSV`);
-      }
-      return response.text();
-    })
-    .then(csvText => {
-      console.log(`Received CSV text for ${type}, length: ${csvText.length} chars`);
-      console.log(`First 100 chars: ${csvText.substring(0, 100)}`);
-      
-      // Rest of your parsing logic...
-    })
-    .catch(error => {
-      console.error(`Error loading ${type} data:`, error);
-      return [];
-    });
-}
-    // Function to load data from CSV files
-    async function loadCSVData() {
-      try {
-        // Show loading overlay
-        document.getElementById("loadingOverlay").style.display = "flex";
-        document.getElementById("loadingOverlay").querySelector(".loading-text").textContent = "Loading organizations data...";
-        
-        debugLog("Starting to load CSV data from GitHub...");
-        
-        // Create an array of promises for loading each type of data
-        const loadPromises = [];
-        for (const type in organizationTypes) {
-          debugLog(`Queueing load for ${type} organizations...`);
-          loadPromises.push(loadCSVFromGitHub(type));
-        }
-        
-        // Wait for all CSV files to load
-        const results = await Promise.all(loadPromises);
-        
-        // Combine all data
-        let allOrganizations = [];
-        
-        results.forEach((typeData, index) => {
-          const type = Object.keys(organizationTypes)[index];
-          orgData[type] = typeData;
-          debugLog(`Loaded ${typeData.length} ${type} organizations`);
-          allOrganizations = allOrganizations.concat(typeData);
-        });
-        
-        // Process organizations
-        organizations = allOrganizations;
-        
-        debugLog(`Loaded ${organizations.length} organizations from all data sources`);
-        
-        // Send to map
-        await processOrganizations();
-      } catch (error) {
-        debugLog(`Error loading CSV data: ${error.message}`);
-        document.getElementById("loadingOverlay").style.display = "none";
-      }
-    }
-    // Create map with basemap
-        const map = new ESRIMap({
-          basemap: "topo-vector"
-        });
-        
-        // Create graphics layer for organizations with explicit visibility settings
-        graphicsLayer = new GraphicsLayer({
-          visible: true,  // Explicitly set to visible
-          opacity: 1,     // Full opacity
-          title: "Organizations"  // Give it a title for easier identification
-        });
-        
-        // Add it to the map and ensure it's added successfully
-        map.add(graphicsLayer);
-        debugLog(`Added graphics layer to map: ${graphicsLayer.id}`);
-        
-        // Create the map view
-        view = new MapView({
-          container: "viewDiv",
-          map: map,
-          center: [-119.4179, 36.7783], // Center on California
-          zoom: 6
-        });
-        
-        // Add basemap toggle
-        const basemapToggle = new BasemapToggle({
-          view: view,
-          nextBasemap: "satellite"
-        });
-        view.ui.add(basemapToggle, "bottom-right");
-        
-        // Define California extent
-        const caExtent = new Extent({
-          xmin: -124.4096,
-          ymin: 32.5343,
-          xmax: -114.1308,
-          ymax: 42.0095,
-          spatialReference: {
-            wkid: 4326
-          }
-        });
-        
-        // Add home widget
-        const homeWidget = new Home({
-          view: view,
-          viewpoint: {
-            targetGeometry: caExtent
-          }
-        });
-        view.ui.add(homeWidget, "top-left");
-        
-        // Create a popup template for marker clicks
-        const popupTemplate = {
-          title: "{city}",
-          content: [
-            {
-              type: "text",
-              text: "{count} organizations with total funding of {totalRevenueDisplay}"
-            }
-          ]
-        };
-        
-        // Function to check graphics layer visibility
-        function checkGraphicsLayerVisibility() {
-          debugLog("Checking graphics layer visibility...");
-          
-          // Check if the layer exists
-          if (!graphicsLayer) {
-            debugLog("ERROR: Graphics layer is not defined");
-            return false;
-          }
-          
-          // Check visibility property
-          debugLog(`Graphics layer visibility: ${graphicsLayer.visible}`);
-          
-          // Check if it has any graphics
-          debugLog(`Graphics layer has ${graphicsLayer.graphics.length} graphics`);
-          
-          // Check if it's in the map's layers
-          const isInMap = map.layers.some(layer => layer === graphicsLayer);
-          debugLog(`Graphics layer is ${isInMap ? '' : 'NOT '} in the map`);
-          
-          // Ensure it's visible and in the map
-          if (!graphicsLayer.visible) {
-            debugLog("Setting graphics layer to visible");
-            graphicsLayer.visible = true;
-          }
-          
-          if (!isInMap) {
-            debugLog("Re-adding graphics layer to map");
-            map.add(graphicsLayer);
-          }
-          
-          return true;
-        }
-        
-        // Function to filter graphics based on revenue and org type
-        function filterGraphics() {
-          graphicsLayer.graphics.forEach(graphic => {
-            const totalRevenue = graphic.attributes.totalRevenue;
-            const orgs = graphic.attributes.organizations || [];
-            
-            let revenueMatch = false;
-            let typeMatch = false;
-            
-            // Check revenue filters
-            if (currentFilter === 'all') {
-              revenueMatch = true;
-            } else if (currentFilter === 'large' && totalRevenue >= 10000000) {
-              revenueMatch = true;
-            } else if (currentFilter === 'med' && totalRevenue >= 1000000 && totalRevenue < 10000000) {
-              revenueMatch = true;
-            } else if (currentFilter === 'small' && totalRevenue < 1000000) {
-              revenueMatch = true;
-            }
-            
-            // Check org type filters
-            if (currentTypeFilter === 'all') {
-              typeMatch = true;
-            } else {
-              // Check if any organizations in this city match the type filter
-              typeMatch = orgs.some(org => org.OrgType === currentTypeFilter);
-            }
-            
-            // Only show if both filters match
-            graphic.visible = revenueMatch && typeMatch;
-          });
-        }
-        
-        // Function to update info panel with organizations data
-        function updateInfoPanel(cityName = null) {
-          const orgsListElement = document.getElementById("orgsList");
-          orgsListElement.innerHTML = "";
-          
-          let displayOrgs = [];
-          
-          if (cityName) {
-            // Selected city view
-            document.getElementById("selectedCity").textContent = `${cityName}, CA`;
-            displayOrgs = organizations.filter(org => org.City === cityName);
-            
-            // Add back button
-            const backButton = document.createElement("button");
-            backButton.textContent = "Back to All Cities";
-            backButton.className = "action-btn";
-            backButton.onclick = function() {
-              selectedCity = null;
-              updateInfoPanel();
-              view.goTo(caExtent);
-            };
-            orgsListElement.appendChild(backButton);
-          } else {
-            // All cities view
-            document.getElementById("selectedCity").textContent = "";
-            
-            // Group by city and create city list
-            for (const city in cityGroups) {
-              const cityInfo = cityGroups[city];
-              
-              // Apply revenue filter
-              if (currentFilter === 'small' && cityInfo.totalRevenue >= 1000000) continue;
-              if (currentFilter === 'med' && (cityInfo.totalRevenue < 1000000 || cityInfo.totalRevenue >= 10000000)) continue;
-              if (currentFilter === 'large' && cityInfo.totalRevenue < 10000000) continue;
-              
-              // Apply type filter
-              if (currentTypeFilter !== 'all') {
-                const hasMatchingOrg = cityInfo.organizations.some(org => org.OrgType === currentTypeFilter);
-                if (!hasMatchingOrg) continue;
-              }
-              
-              const cityItem = document.createElement("div");
-              cityItem.className = "org-item";
-              cityItem.innerHTML = `
-                <div class="org-name">${city}</div>
-                <div>${cityInfo.count} organizations</div>
-                <div>${formatRevenue(cityInfo.totalRevenue)}</div>
-              `;
-              
-              // Add click event to show city detail
-              cityItem.style.cursor = "pointer";
-              cityItem.onclick = function() {
-                selectedCity = city;
-                updateInfoPanel(city);
-                
-                // Zoom to city
-                if (geocodeCache[city]) {
-                  const point = new Point({
-                    longitude: geocodeCache[city][0],
-                    latitude: geocodeCache[city][1]
-                  });
-                  view.goTo({
-                    target: point,
-                    zoom: 10
-                  });
-                }
-              };
-              
-              orgsListElement.appendChild(cityItem);
-            }
-            
-            return;
-          }
-          
-          // Sort organizations by revenue
-          displayOrgs.sort((a, b) => parseRevenue(b["Total revenues"]) - parseRevenue(a["Total revenues"]));
-          
-          // Apply type filter for city view
-          if (currentTypeFilter !== 'all') {
-            displayOrgs = displayOrgs.filter(org => org.OrgType === currentTypeFilter);
-          }
-          
-          // Display organizations for selected city
-          displayOrgs.forEach(org => {
-            const revenue = parseRevenue(org["Total revenues"]);
-            
-            // Apply revenue filter
-            if (currentFilter === 'small' && revenue >= 1000000) return;
-            if (currentFilter === 'med' && (revenue < 1000000 || revenue >= 10000000)) return;
-            if (currentFilter === 'large' && revenue < 10000000) return;
-            
-            const orgItem = document.createElement("div");
-            orgItem.className = "org-item";
-            
-            // Get color for organization type
-            const typeColor = getTypeColor(org.OrgType);
-            const rgbColor = `rgb(${typeColor[0]}, ${typeColor[1]}, ${typeColor[2]})`;
-            
-            // Include type indicator and source data
-            const typeIndicator = `<span class="type-indicator" style="background-color: ${rgbColor};"></span>`;
-            const sourceInfo = organizationTypes[org.OrgType]?.name || 'Unknown Type';
-            
-            orgItem.innerHTML = `
-              <div class="org-name">${typeIndicator}${org.Name}</div>
-              <div>${org["Total revenues"]}</div>
-              <div>${org["IRS 501(c) type"] || ''}</div>
-              <div style="font-size: 0.8em; color: #666;">${sourceInfo}</div>
-            `;
-            orgsListElement.appendChild(orgItem);
-          });
-        }
-        
-        // Function to update statistics panel
-        function updateStatisticsPanel() {
-          const typeBreakdownDiv = document.getElementById("typeBreakdown");
-          const fundingBreakdownDiv = document.getElementById("fundingBreakdown");
-          
-          // Clear existing content
-          typeBreakdownDiv.innerHTML = "<h4>Organizations by Type</h4>";
-          fundingBreakdownDiv.innerHTML = "<h4>Funding by Type</h4>";
-          
-          // Count orgs and funding by type
-          const typeStats = {};
-          let totalCount = 0;
-          let totalFunding = 0;
-          
-          for (const type in organizationTypes) {
-            typeStats[type] = {
-              count: 0,
-              funding: 0
-            };
-          }
-          
-          organizations.forEach(org => {
-            const type = org.OrgType;
-            const revenue = parseRevenue(org["Total revenues"]);
-            
-            if (typeStats[type]) {
-              typeStats[type].count++;
-              typeStats[type].funding += revenue;
-            }
-            
-            totalCount++;
-            totalFunding += revenue;
-          });
-          
-          // Display org count statistics
-          for (const type in typeStats) {
-            if (typeStats[type].count > 0) {
-              const typeInfo = organizationTypes[type];
-              const percentage = ((typeStats[type].count / totalCount) * 100).toFixed(1);
-              const rgbColor = `rgb(${typeInfo.color[0]}, ${typeInfo.color[1]}, ${typeInfo.color[2]})`;
-              
-              const typeItem = document.createElement("div");
-              typeItem.className = "funding-stat";
-              typeItem.innerHTML = `
-                <span class="type-indicator" style="background-color: ${rgbColor};"></span>
-                ${typeInfo.name}: ${typeStats[type].count} orgs (${percentage}%)
-              `;
-              typeBreakdownDiv.appendChild(typeItem);
-            }
-          }
-          
-          // Display funding statistics
-          for (const type in typeStats) {
-            if (typeStats[type].funding > 0) {
-              const typeInfo = organizationTypes[type];
-              const percentage = ((typeStats[type].funding / totalFunding) * 100).toFixed(1);
-              const rgbColor = `rgb(${typeInfo.color[0]}, ${typeInfo.color[1]}, ${typeInfo.color[2]})`;
-              
-              const fundingItem = document.createElement("div");
-              fundingItem.className = "funding-stat";
-              fundingItem.innerHTML = `
-                <span class="type-indicator" style="background-color: ${rgbColor};"></span>
-                ${typeInfo.name}: ${formatRevenue(typeStats[type].funding)} (${percentage}%)
-              `;
-              fundingBreakdownDiv.appendChild(fundingItem);
-            }
-          }
-        }
-        
-        // Enhanced processOrganizations function with improved debugging
-        async function processOrganizations() {
-          try {
-            // Group organizations by city
-            cityGroups = {};
-            let totalRevenue = 0;
-            let caOrgCount = 0;
-            maxFunding = 0;
-            
-            debugLog(`Processing ${organizations.length} organizations...`);
-            
-            // Check if organizations is valid
-            if (!Array.isArray(organizations)) {
-              debugLog(`ERROR: organizations is not an array. Type: ${typeof organizations}`);
-              if (typeof organizations === 'object') {
-                debugLog(`organizations keys: ${Object.keys(organizations).join(', ')}`);
-              }
-              return;
-            }
-            
-            // Reset type totals
-            typeTotals = {};
-            for (const type in organizationTypes) {
-              typeTotals[type] = 0;
-            }
-            
-            organizations.forEach((org, index) => {
-              // Check if organization has valid data
-              if (!org || !org.City || !org.State) {
-                debugLog(`Skipping invalid organization at index ${index}: ${JSON.stringify(org)}`);
-                return;
-              }
-              
-              if (org.State === 'CA') {
-                const city = org.City.trim();
-                const revenue = parseRevenue(org["Total revenues"]);
-                const orgType = org.OrgType || "Unknown";
-                
-                if (isNaN(revenue)) {
-                  debugLog(`Warning: Invalid revenue format for ${org.Name}: "${org["Total revenues"]}"`);
-                }
-                
-                caOrgCount++;
-                totalRevenue += revenue;
-                
-                // Update max funding if this is larger
-                if (revenue > maxFunding) {
-                  maxFunding = revenue;
-                }
-                
-                // Update type totals
-                if (typeTotals[orgType] !== undefined) {
-                  typeTotals[orgType] += revenue;
-                }
-                
-                if (index < 5 || index > organizations.length - 6) {
-                  // Log a few at the beginning and end to avoid flooding
-                  debugLog(`Processing org in ${city}: ${org.Name} - ${org["Total revenues"]}`);
-                } else if (index === 5 && organizations.length > 10) {
-                  debugLog(`... (${organizations.length - 10} more organizations) ...`);
-                }
-                
-                if (!cityGroups[city]) {
-                  cityGroups[city] = {
-                    city: city,
-                    count: 0,
-                    totalRevenue: 0,
-                    organizations: [],
-                    typeRevenue: {} // Track revenue by type within city
-                  };
-                  
-                  // Initialize type revenue counters
-                  for (const type in organizationTypes) {
-                    cityGroups[city].typeRevenue[type] = 0;
-                  }
-                }
-                
-                cityGroups[city].count++;
-                cityGroups[city].totalRevenue += revenue;
-                cityGroups[city].organizations.push(org);
-                
-                // Update type revenue for this city
-                if (cityGroups[city].typeRevenue[orgType] !== undefined) {
-                  cityGroups[city].typeRevenue[orgType] += revenue;
-                }
-              }
-            });
-            
-            // Update statistics
-            document.getElementById("orgCount").textContent = caOrgCount;
-            document.getElementById("cityCount").textContent = Object.keys(cityGroups).length;
-            document.getElementById("fundingTotal").textContent = formatRevenue(totalRevenue);
-            
-            // Update statistics panel
-            updateStatisticsPanel();
-            
-            debugLog(`Found ${caOrgCount} organizations in California with total revenue of ${formatRevenue(totalRevenue)}`);
-            debugLog(`Number of cities: ${Object.keys(cityGroups).length}`);
-            
-            // Create markers for each city
-            const cities = Object.keys(cityGroups);
-            
-            debugLog(`Starting to create markers for ${cities.length} cities...`);
-            
-            // Process cities with a delay to avoid rate limiting
-            let markersCreated = 0;
-            
-            for (let i = 0; i < cities.length; i++) {
-              const city = cities[i];
-              const cityInfo = cityGroups[city];
-              
-              if (i < 3 || i > cities.length - 4) {
-                // Log only a few cities to avoid flooding debug panel
-                debugLog(`Processing city ${i+1}/${cities.length}: ${city} with ${cityInfo.count} organizations and ${formatRevenue(cityInfo.totalRevenue)} revenue`);
-              } else if (i === 3 && cities.length > 6) {
-                debugLog(`... (${cities.length - 6} more cities) ...`);
-              }
-              
-              // Get coordinates (from cache or geocoding)
-              let coordinates;
-              
-              if (geocodeCache[city]) {
-                coordinates = geocodeCache[city];
-                // Only log a few to avoid flooding
-                if (i < 3 || i > cities.length - 4) {
-                  debugLog(`Using cached coordinates for ${city}: [${coordinates}]`);
-                }
-              } else {
-                debugLog(`No cached coordinates for ${city}, attempting geocoding...`);
-                coordinates = await geocodeCity(city);
-                // Add small delay between geocoding requests
-                if (i < cities.length - 1) {
-                  await new Promise(resolve => setTimeout(resolve, 100));
-                }
-              }
-              
-              if (coordinates) {
-                const [longitude, latitude] = coordinates;
-                
-                // Create point
-                const point = new Point({
-                  longitude: longitude,
-                  latitude: latitude
-                });
-                
-                // Determine dominant org type for this city
-                let dominantType = "Unknown";
-                let maxTypeRevenue = 0;
-                
-                for (const type in cityInfo.typeRevenue) {
-                  if (cityInfo.typeRevenue[type] > maxTypeRevenue) {
-                    maxTypeRevenue = cityInfo.typeRevenue[type];
-                    dominantType = type;
-                  }
-                }
-                
-                // Get color based on dominant organization type
-                const markerColor = getTypeColor(dominantType);
-                
-                // Create marker symbol
-                const markerSymbol = {
-                  type: "simple-marker",
-                  size: getMarkerSize(cityInfo.totalRevenue),
-                  color: markerColor,
-                  outline: {
-                    color: [255, 255, 255],
-                    width: 2
-                  }
-                };
-                
-                try {
-                  // Create graphic
-                  const graphic = new Graphic({
-                    geometry: point,
-                    symbol: markerSymbol,
-                    attributes: {
-                      city: city,
-                      count: cityInfo.count,
-                      organizations: cityInfo.organizations,
-                      totalRevenue: cityInfo.totalRevenue,
-                      totalRevenueDisplay: formatRevenue(cityInfo.totalRevenue),
-                      dominantType: dominantType
-                    },
-                    popupTemplate: popupTemplate
-                  });
-                  
-                  // Add to graphics layer
-                  graphicsLayer.add(graphic);
-                  markersCreated++;
-                  
-                  if (i < 3 || i > cities.length - 4 || i === cities.length-1) {
-                    debugLog(`Added marker for ${city} with ${cityInfo.count} orgs, revenue: ${formatRevenue(cityInfo.totalRevenue)}`);
-                  }
-                } catch (error) {
-                  debugLog(`Error creating graphic for ${city}: ${error.message}`);
-                }
-              } else {
-                debugLog(`Could not get coordinates for city: ${city}`);
-              }
-            }
-            
-            debugLog(`Created ${markersCreated} markers out of ${cities.length} cities`);
-            debugLog(`Graphics layer has ${graphicsLayer.graphics.length} graphics`);
-            
-            // Save the complete geocode cache
-            saveGeocodeCache();
-            
-            // Check graphics layer visibility after adding markers
-            checkGraphicsLayerVisibility();
-            
-            // Update info panel
-            updateInfoPanel();
-            
-            // Hide loading overlay
-            document.getElementById("loadingOverlay").style.display = "none";
-          } catch (error) {
-            debugLog(`Error in processOrganizations: ${error.message}`);
-            console.error(error);
-            
-            // Hide loading overlay even on error
-            document.getElementById("loadingOverlay").style.display = "none";
-          }
-        }
-        
-        // Add a test marker to verify the graphics layer is working
-        function addTestMarker() {
-          try {
-            debugLog("Adding test marker to verify graphics layer...");
-            const testPoint = new Point({
-              longitude: -119.0187, 
-              latitude: 35.3733
-            });
-            
-            const testGraphic = new Graphic({
-              geometry: testPoint,
-              symbol: {
-                type: "simple-marker",
-                size: 20,
-                color: [0, 0, 255, 0.8], // Blue
-                outline: {
-                  color: [255, 255, 255],
-                  width: 2
-                }
-              },
-              attributes: {
-                city: "TEST MARKER",
-                count: 1,
-                totalRevenue: 1000000,
-                totalRevenueDisplay: "$1.0M"
-              },
-              popupTemplate: popupTemplate
-            });
-            
-            graphicsLayer.add(testGraphic);
-            debugLog("Test marker added successfully");
-          } catch (error) {
-            debugLog(`Error adding test marker: ${error.message}`);
-          }
-        }
-    // Set up click handler for graphics
-        view.on("click", function(event) {
-          view.hitTest(event).then(function(response) {
-            const graphic = response.results.find(result => {
-              return result.graphic.layer === graphicsLayer;
-            });
-            
-            if (graphic) {
-              const city = graphic.graphic.attributes.city;
-              selectedCity = city;
-              updateInfoPanel(city);
-            }
-          });
-        });
-        
-        // Handle filter buttons - Revenue
-        document.getElementById("filterAll").addEventListener("click", function() {
-          currentFilter = 'all';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(2) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterLarge").addEventListener("click", function() {
-          currentFilter = 'large';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(2) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterMed").addEventListener("click", function() {
-          currentFilter = 'med';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(2) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterSmall").addEventListener("click", function() {
-          currentFilter = 'small';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(2) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        // Handle filter buttons - Organization Type
-        document.getElementById("filterAllTypes").addEventListener("click", function() {
-          currentTypeFilter = 'all';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterLand").addEventListener("click", function() {
-          currentTypeFilter = 'Land';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterWater").addEventListener("click", function() {
-          currentTypeFilter = 'Water';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterAgri").addEventListener("click", function() {
-          currentTypeFilter = 'Agriculture';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterBusiness").addEventListener("click", function() {
-          currentTypeFilter = 'Business';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterEnv").addEventListener("click", function() {
-          currentTypeFilter = 'Environment';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterLabor").addEventListener("click", function() {
-          currentTypeFilter = 'Labor';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterFarm").addEventListener("click", function() {
-          currentTypeFilter = 'Farmworker';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        // Helper function to set active filter button
-        function setActiveFilterButton(button, buttonGroup) {
-          const buttons = buttonGroup || document.querySelectorAll(".filter-btn");
-          buttons.forEach(btn => {
-            btn.classList.remove("active");
-          });
-          button.classList.add("active");
-        }
-        
-        // Reset view button
-        document.getElementById("resetViewBtn").addEventListener("click", function() {
-          view.goTo(caExtent);
-          selectedCity = null;
-          updateInfoPanel();
-        });
-        
-        // Reset cache button
-        document.getElementById("resetCacheBtn").addEventListener("click", function() {
-          if (confirm("This will reset your geocode cache. Continue?")) {
-            if (resetGeocodeCache()) {
-              alert("Geocache reset. Reloading the map...");
-              location.reload();
-            }
-          }
-        });
-        
-        // Initialize the application when view is ready
-        view.when(function() {
-          debugLog("Map view initialized");
-          
-          // Check for invalid coordinates before processing
-          cleanupInvalidCachedCoordinates();
-          
-          // Add a test marker to verify the graphics layer is working
-          addTestMarker();
-          
-          // Load the CSV data
-          loadCSVData();
-        });
-      } catch (error) {
-        debugLog(`Error initializing map: ${error.message}`);
-        console.error(error);
-        
-        // Hide loading overlay on critical error
-        document.getElementById("loadingOverlay").style.display = "none";
-      }
-    });
-  </script>
-</body>
-</html>
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>California Land Stakeholder Power Map</title>
-  
-  <!-- Load the ArcGIS Maps SDK for JavaScript core API -->
-  <link rel="stylesheet" href="https://js.arcgis.com/4.32/esri/themes/light/main.css"/>
-  
-  <!-- Add Papa Parse for CSV parsing -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-  
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
-      font-family: 'Avenir Next', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    }
-    
-    #viewDiv {
-      height: 100%;
-      width: 100%;
-    }
-    
-    #infoPanel {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      z-index: 99;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      width: 320px;
-      max-height: calc(100vh - 100px);
-      overflow-y: auto;
-      padding: 15px;
-    }
-    
-    #legendPanel {
-      position: absolute;
-      bottom: 30px;
-      left: 20px;
-      z-index: 99;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      padding: 15px;
-      max-width: 280px;
-    }
-    
-    #debugPanel {
-      position: absolute;
-      bottom: 30px;
-      right: 20px;
-      z-index: 99;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      padding: 15px;
-      max-width: 300px;
-      max-height: 200px;
-      overflow: auto;
-      font-size: 12px;
-    }
-    
-    .legend-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-    
-    .legend-color {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      margin-right: 10px;
-      flex-shrink: 0;
-    }
-    
-    .legend-text {
-      font-size: 0.9em;
-    }
-    
-    .filter-btn {
-      margin: 5px 5px 5px 0;
-      padding: 8px 12px;
-      border: none;
-      border-radius: 4px;
-      background-color: #f0f0f0;
-      cursor: pointer;
-      font-size: 0.85em;
-    }
-    
-    .filter-btn.active {
-      background-color: #0079c1;
-      color: white;
-    }
-    
-    .org-item {
-      border-bottom: 1px solid #eee;
-      padding: 8px 0;
-    }
-    
-    .org-name {
-      font-weight: bold;
-      color: #0079c1;
-    }
-    
-    .title-bar {
-      background-color: #0079c1;
-      color: white;
-      padding: 10px 15px;
-      margin: -15px -15px 15px -15px;
-      border-radius: 8px 8px 0 0;
-    }
-    
-    .stats-container {
-      display: flex;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
-    }
-    
-    .stat-box {
-      flex: 1;
-      text-align: center;
-      background-color: #f9f9f9;
-      padding: 10px;
-      border-radius: 4px;
-      margin-right: 8px;
-      margin-bottom: 8px;
-      min-width: 80px;
-    }
-    
-    .stat-box:last-child {
-      margin-right: 0;
-    }
-    
-    .stat-value {
-      font-size: 1.2em;
-      font-weight: bold;
-      color: #0079c1;
-    }
-    
-    .stat-label {
-      font-size: 0.8em;
-      color: #666;
-    }
-    
-    .action-btn {
-      background-color: #0079c1;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      padding: 8px 12px;
-      margin-top: 10px;
-      width: 100%;
-      cursor: pointer;
-    }
-    
-    .action-btn:hover {
-      background-color: #005e95;
-    }
-
-    #resetViewBtn {
-      position: absolute;
-      bottom: 150px;
-      left: 20px;
-      z-index: 99;
-      background-color: white;
-      border: none;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      padding: 10px 15px;
-      cursor: pointer;
-    }
-    
-    #resetCacheBtn {
-      position: absolute;
-      bottom: 200px;
-      left: 20px;
-      z-index: 99;
-      background-color: white;
-      border: none;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      padding: 10px 15px;
-      cursor: pointer;
-      color: #d9534f; /* Bootstrap danger color */
-    }
-    
-    .filter-group {
-      margin-bottom: 10px;
-    }
-    
-    .filter-label {
-      font-weight: bold;
-      margin-bottom: 5px;
-      font-size: 0.9em;
-    }
-    
-    .type-indicator {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      margin-right: 5px;
-    }
-    
-    .loading-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(255, 255, 255, 0.8);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    
-    .loading-spinner {
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid #0079c1;
-      border-radius: 50%;
-      width: 50px;
-      height: 50px;
-      animation: spin 2s linear infinite;
-      margin-bottom: 20px;
-    }
-    
-    .loading-text {
-      color: #333;
-      font-size: 1.2em;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    .tab-container {
-      margin-bottom: 15px;
-    }
-    
-    .tab-button {
-      padding: 8px 12px;
-      background-color: #f0f0f0;
-      border: none;
-      cursor: pointer;
-      border-radius: 4px 4px 0 0;
-      margin-right: 2px;
-    }
-    
-    .tab-button.active {
-      background-color: #0079c1;
-      color: white;
-    }
-    
-    .tab-content {
-      display: none;
-      padding: 10px;
-      background-color: #f9f9f9;
-      border-radius: 0 4px 4px 4px;
-    }
-    
-    .tab-content.active {
-      display: block;
-    }
-    
-    .size-legend {
-      display: flex;
-      align-items: center;
-      margin-bottom: 15px;
-      border-top: 1px solid #eee;
-      padding-top: 10px;
-      margin-top: 10px;
-    }
-    
-    .size-circles {
-      display: flex;
-      align-items: flex-end;
-      margin-right: 10px;
-    }
-    
-    .size-circle {
-      border: 1px solid #666;
-      border-radius: 50%;
-      margin-right: 5px;
-    }
-    
-    .size-labels {
-      display: flex;
-      font-size: 0.8em;
-      color: #666;
-    }
-    
-    .size-label {
-      width: 50px;
-      text-align: center;
-    }
-    
-    .funding-stat {
-      font-size: 0.85em;
-      color: #666;
-      margin-bottom: 5px;
-    }
     
     .loading-progress {
       width: 100%;
@@ -2051,7 +458,6 @@ function loadCSVFromGitHub(type) {
 
   <!-- Load ArcGIS API -->
   <script src="https://js.arcgis.com/4.32/"></script>
-
   <script>
     // Tab navigation
     function openTab(evt, tabName) {
@@ -2072,13 +478,15 @@ function loadCSVFromGitHub(type) {
     // Debug function to log information
     function debugLog(message) {
       const debugContent = document.getElementById("debugContent");
-      const logItem = document.createElement("div");
-      logItem.textContent = message;
-      debugContent.appendChild(logItem);
+      if (debugContent) {
+        const logItem = document.createElement("div");
+        logItem.textContent = message;
+        debugContent.appendChild(logItem);
+        
+        // Auto-scroll to bottom of debug panel
+        debugContent.scrollTop = debugContent.scrollHeight;
+      }
       console.log(message);
-      
-      // Auto-scroll to bottom of debug panel
-      debugContent.scrollTop = debugContent.scrollHeight;
     }
     
     // Define organization types and their colors
@@ -2120,7 +528,12 @@ function loadCSVFromGitHub(type) {
       }
     };
     
-    // Static CSV data embedded in the HTML
+    // GitHub content URLs for CSV files
+    const githubBaseUrl = "https://raw.githubusercontent.com/pluricalifornia/powermap/main/";
+    
+    // Flag to control using static data vs GitHub data
+    let useStaticData = true; // Set to false to attempt GitHub loading
+    // Static CSV data embedded in the HTML as a fallback
     const csvData = {
       "Land": `Name,EIN,IRS 501(c) type,City,State,Total revenues
 The Nature Conservancy,53-0242652,501(c)(3),San Francisco,CA,$34144676
@@ -2189,7 +602,6 @@ California Rural Legal Assistance Foundation,68-0233370,501(c)(3),Sacramento,CA,
 Center on Race Poverty & Environment (CRPE),94-2859639,501(c)(3),Delano,CA,$2083620
 Center for Workers' Rights,47-2846161,501(c)(3),Sacramento,CA,$869688`
     };
-    
     // Enhanced list of California city coordinates
     const cityCoordinates = {
       // Major cities
@@ -2294,6 +706,29 @@ Center for Workers' Rights,47-2846161,501(c)(3),Sacramento,CA,$869688`
       "Lodi": [-121.2722, 38.1342],
       "Exeter": [-119.1420, 36.2960]
     };
+    // Global variables
+    let view;
+    let graphicsLayer;
+    let organizations = [];
+    let cityGroups = {};
+    let currentFilter = 'all';
+    let currentTypeFilter = 'all';
+    let selectedCity = null;
+    let geocodeCache = {}; // Added geocodeCache as a global variable
+    let maxFunding = 0; // Track maximum funding for proportional scaling
+    let typeTotals = {}; // Track funding totals by organization type
+    
+    // Embedded CSV data - these will be populated from the embedded data
+    // Format is type key: array of organization objects
+    let orgData = {
+      "Land": [],
+      "Water": [],
+      "Agriculture": [],
+      "Business": [],
+      "Environment": [],
+      "Labor": [],
+      "Farm": []
+    };
     
     // Load geocode cache from localStorage with improved error handling
     let storedGeoCache = {};
@@ -2332,30 +767,6 @@ Center for Workers' Rights,47-2846161,501(c)(3),Sacramento,CA,$869688`
       debugLog(`Error accessing localStorage: ${e.message}`);
     }
     
-    // Global variables
-    let view;
-    let graphicsLayer;
-    let organizations = [];
-    let cityGroups = {};
-    let currentFilter = 'all';
-    let currentTypeFilter = 'all';
-    let selectedCity = null;
-    let geocodeCache = {}; // Added geocodeCache as a global variable
-    let maxFunding = 0; // Track maximum funding for proportional scaling
-    let typeTotals = {}; // Track funding totals by organization type
-    
-    // Embedded CSV data - these will be populated from the embedded data
-    // Format is type key: array of organization objects
-    let orgData = {
-      "Land": [],
-      "Water": [],
-      "Agriculture": [],
-      "Business": [],
-      "Environment": [],
-      "Labor": [],
-      "Farm": []
-    };
-    
     // Function to reset the geocode cache
     function resetGeocodeCache() {
       try {
@@ -2377,7 +788,6 @@ Center for Workers' Rights,47-2846161,501(c)(3),Sacramento,CA,$869688`
         lat >= 32.5 && lat <= 42.0        // Latitude bounds for California
       );
     }
-    
     // Function to bulk clear existing invalid coordinates
     function cleanupInvalidCachedCoordinates() {
       let removedCount = 0;
@@ -2462,147 +872,398 @@ Center for Workers' Rights,47-2846161,501(c)(3),Sacramento,CA,$869688`
     function getTypeColor(orgType) {
       return organizationTypes[orgType]?.color || [128, 128, 128, 0.8]; // Default gray
     }
-    
-    // Use the AMD pattern as recommended by ArcGIS
-require([
-  "esri/Map", 
-  "esri/views/MapView",
-  "esri/Graphic",
-  "esri/layers/GraphicsLayer",
-  "esri/geometry/Point",
-  "esri/widgets/BasemapToggle",
-  "esri/widgets/Home",
-  "esri/geometry/Extent",
-  "esri/request"
-], (ESRIMap, MapView, Graphic, GraphicsLayer, Point, BasemapToggle, Home, Extent, esriRequest) => {
-  debugLog("ArcGIS modules loaded successfully");
-  
-  try {
-    // Initialize the geocodeCache with combined data
-    geocodeCache = {...cityCoordinates, ...storedGeoCache};
-    
-    // Updated geocodeCity function using fetch with Nominatim API
-    async function geocodeCity(cityName, state = "CA") {
-      // Check cache first
-      if (geocodeCache[cityName]) {
-        // Validate cached coordinates
-        const coords = geocodeCache[cityName];
-        if (isValidCaliforniaCoordinate(coords)) {
-          debugLog(`Using cached coordinates for ${cityName}: [${coords}]`);
-          return coords;
-        } else {
-          debugLog(`Found invalid cached coordinates for ${cityName}: [${coords}], re-geocoding`);
-          // If invalid, continue to geocode
+    // Function to get GitHub URL for a CSV file
+    function getGitHubUrl(baseFileName) {
+      return githubBaseUrl + baseFileName;
+    }
+
+    // Function to load CSV from a string
+    function loadCSVFromString(csvString, orgType) {
+      return new Promise((resolve, reject) => {
+        try {
+          // Use PapaParse to parse the CSV string
+          Papa.parse(csvString, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+              // Add organization type to each record
+              const typedData = results.data.map(org => ({
+                ...org,
+                OrgType: orgType
+              }));
+              resolve(typedData);
+            },
+            error: function(error) {
+              reject(error);
+            }
+          });
+        } catch (error) {
+          reject(error);
         }
-      }
+      });
+    }
+    
+    // Function to load CSV from GitHub
+    function loadCSVFromGitHub(type) {
+      const csvUrl = getGitHubUrl(organizationTypes[type].csvBase);
+      debugLog(`Attempting to fetch: ${csvUrl}`);
       
-      debugLog(`Geocoding city: ${cityName}, ${state}`);
-      
+      return fetch(csvUrl)
+        .then(response => {
+          debugLog(`Response for ${type}: status=${response.status}`);
+          if (!response.ok) {
+            throw new Error(`HTTP error ${response.status} for ${type} CSV`);
+          }
+          return response.text();
+        })
+        .then(csvText => {
+          debugLog(`Received CSV text for ${type}, length: ${csvText.length} chars`);
+          
+          // Return the parsed CSV data
+          return new Promise((resolve, reject) => {
+            Papa.parse(csvText, {
+              header: true,
+              skipEmptyLines: true,
+              complete: function(results) {
+                // Add organization type to each record
+                const typedData = results.data.map(org => ({
+                  ...org,
+                  OrgType: type
+                }));
+                debugLog(`Successfully parsed ${typedData.length} organizations for ${type}`);
+                resolve(typedData);
+              },
+              error: function(error) {
+                debugLog(`Error parsing CSV for ${type}: ${error}`);
+                reject(error);
+              }
+            });
+          });
+        })
+        .catch(error => {
+          debugLog(`Error loading ${type} data from GitHub: ${error.message}`);
+          debugLog(`Falling back to static data for ${type}`);
+          
+          // Fallback to static data
+          if (csvData[type]) {
+            return loadCSVFromString(csvData[type], type);
+          } else {
+            return [];
+          }
+        });
+    }
+    // Function to load all CSV data
+    async function loadAllCSVData() {
       try {
-        // Use OpenStreetMap's Nominatim service
-        const encodedCity = encodeURIComponent(cityName);
-        const encodedState = encodeURIComponent(state);
+        // Show loading overlay
+        document.getElementById("loadingOverlay").style.display = "flex";
+        document.getElementById("loadingOverlay").querySelector(".loading-text").textContent = "Loading organizations data...";
         
-        const url = `https://nominatim.openstreetmap.org/search?city=${encodedCity}&state=${encodedState}&country=USA&format=json`;
+        let allOrganizations = [];
+        let loadedTypes = 0;
+        const totalTypes = Object.keys(organizationTypes).length;
         
-        // Important: Add a small delay to respect rate limits
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Process each organization type
+        for (const type in organizationTypes) {
+          try {
+            document.getElementById("loadingOverlay").querySelector(".loading-text").textContent = 
+              `Loading ${organizationTypes[type].name}...`;
+            
+            // Update progress
+            const progress = (loadedTypes / totalTypes) * 100;
+            document.getElementById("progressBar").style.width = `${progress}%`;
+            
+            let orgs = [];
+            
+            if (useStaticData) {
+              // Load from static embedded data
+              if (csvData[type]) {
+                orgs = await loadCSVFromString(csvData[type], type);
+                debugLog(`Loaded ${orgs.length} organizations from static ${type} data`);
+              } else {
+                debugLog(`No static CSV data found for ${type}`);
+              }
+            } else {
+              // Try loading from GitHub
+              try {
+                orgs = await loadCSVFromGitHub(type);
+                debugLog(`Loaded ${orgs.length} organizations from GitHub ${type} data`);
+              } catch (error) {
+                debugLog(`Error loading ${type} data from GitHub: ${error.message}`);
+                // Fallback to static data
+                if (csvData[type]) {
+                  orgs = await loadCSVFromString(csvData[type], type);
+                  debugLog(`Loaded ${orgs.length} organizations from static ${type} data (fallback)`);
+                }
+              }
+            }
+            
+            orgData[type] = orgs;
+            allOrganizations = allOrganizations.concat(orgs);
+            loadedTypes++;
+            
+          } catch (error) {
+            debugLog(`Error loading ${type} data: ${error.message}`);
+          }
+        }
         
-        const response = await fetch(url, {
-          headers: {
-            // It's good practice to add a user agent when using Nominatim
-            'User-Agent': 'CaliforniaLandConservationMap/1.0'
+        // Update progress to 100%
+        document.getElementById("progressBar").style.width = "100%";
+        
+        // Combine all data
+        organizations = allOrganizations;
+        
+        debugLog(`Loaded ${organizations.length} organizations from all data sources`);
+        
+        // Process all the organizations
+        await processOrganizations();
+      } catch (error) {
+        debugLog(`Error loading CSV data: ${error.message}`);
+        document.getElementById("loadingOverlay").style.display = "none";
+      }
+    }
+    // Enhanced processOrganizations function with improved debugging
+    async function processOrganizations() {
+      try {
+        // Group organizations by city
+        cityGroups = {};
+        let totalRevenue = 0;
+        let caOrgCount = 0;
+        maxFunding = 0;
+        
+        debugLog(`Processing ${organizations.length} organizations...`);
+        
+        // Check if organizations is valid
+        if (!Array.isArray(organizations)) {
+          debugLog(`ERROR: organizations is not an array. Type: ${typeof organizations}`);
+          if (typeof organizations === 'object') {
+            debugLog(`organizations keys: ${Object.keys(organizations).join(', ')}`);
+          }
+          return;
+        }
+        
+        // Reset type totals
+        typeTotals = {};
+        for (const type in organizationTypes) {
+          typeTotals[type] = 0;
+        }
+        
+        organizations.forEach((org, index) => {
+          // Check if organization has valid data
+          if (!org || !org.City || !org.State) {
+            debugLog(`Skipping invalid organization at index ${index}: ${JSON.stringify(org)}`);
+            return;
+          }
+          
+          if (org.State === 'CA') {
+            const city = org.City.trim();
+            const revenue = parseRevenue(org["Total revenues"]);
+            const orgType = org.OrgType || "Unknown";
+            
+            if (isNaN(revenue)) {
+              debugLog(`Warning: Invalid revenue format for ${org.Name}: "${org["Total revenues"]}"`);
+            }
+            
+            caOrgCount++;
+            totalRevenue += revenue;
+            
+            // Update max funding if this is larger
+            if (revenue > maxFunding) {
+              maxFunding = revenue;
+            }
+            
+            // Update type totals
+            if (typeTotals[orgType] !== undefined) {
+              typeTotals[orgType] += revenue;
+            }
+            
+            if (index < 5 || index > organizations.length - 6) {
+              // Log a few at the beginning and end to avoid flooding
+              debugLog(`Processing org in ${city}: ${org.Name} - ${org["Total revenues"]}`);
+            } else if (index === 5 && organizations.length > 10) {
+              debugLog(`... (${organizations.length - 10} more organizations) ...`);
+            }
+            
+            if (!cityGroups[city]) {
+              cityGroups[city] = {
+                city: city,
+                count: 0,
+                totalRevenue: 0,
+                organizations: [],
+                typeRevenue: {} // Track revenue by type within city
+              };
+              
+              // Initialize type revenue counters
+              for (const type in organizationTypes) {
+                cityGroups[city].typeRevenue[type] = 0;
+              }
+            }
+            
+            cityGroups[city].count++;
+            cityGroups[city].totalRevenue += revenue;
+            cityGroups[city].organizations.push(org);
+            
+            // Update type revenue for this city
+            if (cityGroups[city].typeRevenue[orgType] !== undefined) {
+              cityGroups[city].typeRevenue[orgType] += revenue;
+            }
           }
         });
         
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        // Update statistics
+        document.getElementById("orgCount").textContent = caOrgCount;
+        document.getElementById("cityCount").textContent = Object.keys(cityGroups).length;
+        document.getElementById("fundingTotal").textContent = formatRevenue(totalRevenue);
         
-        const data = await response.json();
+        // Update statistics panel
+        updateStatisticsPanel();
         
-        if (data && data.length > 0) {
-          // Get longitude and latitude from first result
-          const coords = [parseFloat(data[0].lon), parseFloat(data[0].lat)];
-          
-          // Validate coordinates to make sure they're in California
-          if (isValidCaliforniaCoordinate(coords)) {
-            debugLog(`Successfully geocoded ${cityName}: [${coords}]`);
-            
-            // Save to cache
-            geocodeCache[cityName] = coords;
-            saveGeocodeCache();
-            
-            return coords;
-          } else {
-            debugLog(`Nominatim returned coordinates outside California for ${cityName}: [${coords}]`);
-            return null;
-          }
-        } else {
-          debugLog(`No geocoding results for: ${cityName}, ${state}`);
-          
-          // Fallback to hardcoded coordinates if available
-          if (cityCoordinates[cityName]) {
-            debugLog(`Using fallback hardcoded coordinates for ${cityName}`);
-            return cityCoordinates[cityName];
-          }
-          
-          return null;
-        }
+        debugLog(`Found ${caOrgCount} organizations in California with total revenue of ${formatRevenue(totalRevenue)}`);
+        debugLog(`Number of cities: ${Object.keys(cityGroups).length}`);
       } catch (error) {
-        debugLog(`Geocoding error for ${cityName}: ${error.message}`);
-        
-        // Fallback to hardcoded coordinates if available
-        if (cityCoordinates[cityName]) {
-          debugLog(`Using fallback hardcoded coordinates for ${cityName} after error`);
-          return cityCoordinates[cityName];
-        }
-        
-        return null;
+        debugLog(`Error in processOrganizations: ${error.message}`);
+        console.error(error);
       }
     }
-    
-    // Create map with basemap - FIXED HERE
-    const map = new Map({
-      basemap: "topo-vector"
-    });
-    
-    // Create graphics layer for organizations with explicit visibility settings
-    graphicsLayer = new GraphicsLayer({
-      visible: true,  // Explicitly set to visible
-      opacity: 1,     // Full opacity
-      title: "Organizations"  // Give it a title for easier identification
-    });
-    
-    // Add it to the map and ensure it's added successfully
-    map.add(graphicsLayer);
-    debugLog(`Added graphics layer to map: ${graphicsLayer.id}`);
-    
-    // Create the map view
-    view = new MapView({
-      container: "viewDiv",
-      map: map,
-      center: [-119.4179, 36.7783], // Center on California
-      zoom: 6
-    });
-    
-    // Add basemap toggle
-    const basemapToggle = new BasemapToggle({
-      view: view,
-      nextBasemap: "satellite"
-    });
-    view.ui.add(basemapToggle, "bottom-right");
-    
-    // Define California extent
-    const caExtent = new Extent({
-      xmin: -124.4096,
-      ymin: 32.5343,
-      xmax: -114.1308,
-      ymax: 42.0095,
-      spatialReference: {
-        wkid: 4326
-      }
-    });
+    // Use the AMD pattern as recommended by ArcGIS
+    require([
+      "esri/Map", 
+      "esri/views/MapView",
+      "esri/Graphic",
+      "esri/layers/GraphicsLayer",
+      "esri/geometry/Point",
+      "esri/widgets/BasemapToggle",
+      "esri/widgets/Home",
+      "esri/geometry/Extent"
+    ], function(ArcGISMap, MapView, Graphic, GraphicsLayer, Point, BasemapToggle, Home, Extent) {
+      
+      debugLog("ArcGIS modules loaded successfully");
+      
+      try {
+        // Initialize the geocodeCache with combined data
+        geocodeCache = {...cityCoordinates, ...storedGeoCache};
+        
+        // Updated geocodeCity function using fetch with Nominatim API
+        async function geocodeCity(cityName, state = "CA") {
+          // Check cache first
+          if (geocodeCache[cityName]) {
+            // Validate cached coordinates
+            const coords = geocodeCache[cityName];
+            if (isValidCaliforniaCoordinate(coords)) {
+              debugLog(`Using cached coordinates for ${cityName}: [${coords}]`);
+              return coords;
+            } else {
+              debugLog(`Found invalid cached coordinates for ${cityName}: [${coords}], re-geocoding`);
+              // If invalid, continue to geocode
+            }
+          }
+          
+          debugLog(`Geocoding city: ${cityName}, ${state}`);
+          
+          try {
+            // Use OpenStreetMap's Nominatim service
+            const encodedCity = encodeURIComponent(cityName);
+            const encodedState = encodeURIComponent(state);
+            
+            const url = `https://nominatim.openstreetmap.org/search?city=${encodedCity}&state=${encodedState}&country=USA&format=json`;
+            
+            // Important: Add a small delay to respect rate limits
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const response = await fetch(url, {
+              headers: {
+                // It's good practice to add a user agent when using Nominatim
+                'User-Agent': 'CaliforniaLandConservationMap/1.0'
+              }
+            });
+            
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data && data.length > 0) {
+              // Get longitude and latitude from first result
+              const coords = [parseFloat(data[0].lon), parseFloat(data[0].lat)];
+              
+              // Validate coordinates to make sure they're in California
+              if (isValidCaliforniaCoordinate(coords)) {
+                debugLog(`Successfully geocoded ${cityName}: [${coords}]`);
+                
+                // Save to cache
+                geocodeCache[cityName] = coords;
+                saveGeocodeCache();
+                
+                return coords;
+              } else {
+                debugLog(`Nominatim returned coordinates outside California for ${cityName}: [${coords}]`);
+                return null;
+              }
+            } else {
+              debugLog(`No geocoding results for: ${cityName}, ${state}`);
+              
+              // Fallback to hardcoded coordinates if available
+              if (cityCoordinates[cityName]) {
+                debugLog(`Using fallback hardcoded coordinates for ${cityName}`);
+                return cityCoordinates[cityName];
+              }
+              
+              return null;
+            }
+          } catch (error) {
+            debugLog(`Geocoding error for ${cityName}: ${error.message}`);
+            
+            // Fallback to hardcoded coordinates if available
+            if (cityCoordinates[cityName]) {
+              debugLog(`Using fallback hardcoded coordinates for ${cityName} after error`);
+              return cityCoordinates[cityName];
+            }
+            
+            return null;
+          }
+        }
+        // Create map with basemap - FIXED: Using ArcGISMap instead of Map
+        const esriMap = new ArcGISMap({
+          basemap: "topo-vector"
+        });
+        
+        // Create graphics layer for organizations with explicit visibility settings
+        graphicsLayer = new GraphicsLayer({
+          visible: true,  // Explicitly set to visible
+          opacity: 1,     // Full opacity
+          title: "Organizations"  // Give it a title for easier identification
+        });
+        
+        // Add it to the map and ensure it's added successfully
+        esriMap.add(graphicsLayer);
+        debugLog(`Added graphics layer to map: ${graphicsLayer.id}`);
+        
+        // Create the map view
+        view = new MapView({
+          container: "viewDiv",
+          map: esriMap,
+          center: [-119.4179, 36.7783], // Center on California
+          zoom: 6
+        });
+        
+        // Add basemap toggle
+        const basemapToggle = new BasemapToggle({
+          view: view,
+          nextBasemap: "satellite"
+        });
+        view.ui.add(basemapToggle, "bottom-right");
+        
+        // Define California extent
+        const caExtent = new Extent({
+          xmin: -124.4096,
+          ymin: 32.5343,
+          xmax: -114.1308,
+          ymax: 42.0095,
+          spatialReference: {
+            wkid: 4326
+          }
+        });
         
         // Add home widget
         const homeWidget = new Home({
@@ -2623,7 +1284,6 @@ require([
             }
           ]
         };
-        
         // Function to check graphics layer visibility
         function checkGraphicsLayerVisibility() {
           debugLog("Checking graphics layer visibility...");
@@ -2641,7 +1301,7 @@ require([
           debugLog(`Graphics layer has ${graphicsLayer.graphics.length} graphics`);
           
           // Check if it's in the map's layers
-          const isInMap = map.layers.some(layer => layer === graphicsLayer);
+          const isInMap = esriMap.layers.some(layer => layer === graphicsLayer);
           debugLog(`Graphics layer is ${isInMap ? '' : 'NOT '} in the map`);
           
           // Ensure it's visible and in the map
@@ -2652,7 +1312,7 @@ require([
           
           if (!isInMap) {
             debugLog("Re-adding graphics layer to map");
-            map.add(graphicsLayer);
+            esriMap.add(graphicsLayer);
           }
           
           return true;
@@ -2690,7 +1350,6 @@ require([
             graphic.visible = revenueMatch && typeMatch;
           });
         }
-        
         // Function to update info panel with organizations data
         function updateInfoPanel(cityName = null) {
           const orgsListElement = document.getElementById("orgsList");
@@ -2802,7 +1461,6 @@ require([
             orgsListElement.appendChild(orgItem);
           });
         }
-        
         // Function to update statistics panel
         function updateStatisticsPanel() {
           const typeBreakdownDiv = document.getElementById("typeBreakdown");
@@ -2871,106 +1529,9 @@ require([
             }
           }
         }
-        
-        // Enhanced processOrganizations function with improved debugging
-        async function processOrganizations() {
+        // Function to create city markers based on processed data
+        async function createCityMarkers() {
           try {
-            // Group organizations by city
-            cityGroups = {};
-            let totalRevenue = 0;
-            let caOrgCount = 0;
-            maxFunding = 0;
-            
-            debugLog(`Processing ${organizations.length} organizations...`);
-            
-            // Check if organizations is valid
-            if (!Array.isArray(organizations)) {
-              debugLog(`ERROR: organizations is not an array. Type: ${typeof organizations}`);
-              if (typeof organizations === 'object') {
-                debugLog(`organizations keys: ${Object.keys(organizations).join(', ')}`);
-              }
-              return;
-            }
-            
-            // Reset type totals
-            typeTotals = {};
-            for (const type in organizationTypes) {
-              typeTotals[type] = 0;
-            }
-            
-            organizations.forEach((org, index) => {
-              // Check if organization has valid data
-              if (!org || !org.City || !org.State) {
-                debugLog(`Skipping invalid organization at index ${index}: ${JSON.stringify(org)}`);
-                return;
-              }
-              
-              if (org.State === 'CA') {
-                const city = org.City.trim();
-                const revenue = parseRevenue(org["Total revenues"]);
-                const orgType = org.OrgType || "Unknown";
-                
-                if (isNaN(revenue)) {
-                  debugLog(`Warning: Invalid revenue format for ${org.Name}: "${org["Total revenues"]}"`);
-                }
-                
-                caOrgCount++;
-                totalRevenue += revenue;
-                
-                // Update max funding if this is larger
-                if (revenue > maxFunding) {
-                  maxFunding = revenue;
-                }
-                
-                // Update type totals
-                if (typeTotals[orgType] !== undefined) {
-                  typeTotals[orgType] += revenue;
-                }
-                
-                if (index < 5 || index > organizations.length - 6) {
-                  // Log a few at the beginning and end to avoid flooding
-                  debugLog(`Processing org in ${city}: ${org.Name} - ${org["Total revenues"]}`);
-                } else if (index === 5 && organizations.length > 10) {
-                  debugLog(`... (${organizations.length - 10} more organizations) ...`);
-                }
-                
-                if (!cityGroups[city]) {
-                  cityGroups[city] = {
-                    city: city,
-                    count: 0,
-                    totalRevenue: 0,
-                    organizations: [],
-                    typeRevenue: {} // Track revenue by type within city
-                  };
-                  
-                  // Initialize type revenue counters
-                  for (const type in organizationTypes) {
-                    cityGroups[city].typeRevenue[type] = 0;
-                  }
-                }
-                
-                cityGroups[city].count++;
-                cityGroups[city].totalRevenue += revenue;
-                cityGroups[city].organizations.push(org);
-                
-                // Update type revenue for this city
-                if (cityGroups[city].typeRevenue[orgType] !== undefined) {
-                  cityGroups[city].typeRevenue[orgType] += revenue;
-                }
-              }
-            });
-            
-            // Update statistics
-            document.getElementById("orgCount").textContent = caOrgCount;
-            document.getElementById("cityCount").textContent = Object.keys(cityGroups).length;
-            document.getElementById("fundingTotal").textContent = formatRevenue(totalRevenue);
-            
-            // Update statistics panel
-            updateStatisticsPanel();
-            
-            debugLog(`Found ${caOrgCount} organizations in California with total revenue of ${formatRevenue(totalRevenue)}`);
-            debugLog(`Number of cities: ${Object.keys(cityGroups).length}`);
-            
             // Create markers for each city
             const cities = Object.keys(cityGroups);
             
@@ -3086,99 +1647,17 @@ require([
             // Check graphics layer visibility after adding markers
             checkGraphicsLayerVisibility();
             
-            // Update info panel
-            updateInfoPanel();
-            
             // Hide loading overlay
             document.getElementById("loadingOverlay").style.display = "none";
-          } catch (error) {
-            debugLog(`Error in processOrganizations: ${error.message}`);
-            console.error(error);
             
+            return markersCreated;
+          } catch (error) {
+            debugLog(`Error creating city markers: ${error.message}`);
             // Hide loading overlay even on error
             document.getElementById("loadingOverlay").style.display = "none";
+            return 0;
           }
         }
-        
-        // Function to load data from CSV
-        async function loadCSVFromString(csvString, orgType) {
-          return new Promise((resolve, reject) => {
-            try {
-              // Use PapaParse to parse the CSV string
-              Papa.parse(csvString, {
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                  // Add organization type to each record
-                  const typedData = results.data.map(org => ({
-                    ...org,
-                    OrgType: orgType
-                  }));
-                  resolve(typedData);
-                },
-                error: function(error) {
-                  reject(error);
-                }
-              });
-            } catch (error) {
-              reject(error);
-            }
-          });
-        }
-        
-        // Function to load all CSV data
-        async function loadAllCSVData() {
-          try {
-            // Show loading overlay
-            document.getElementById("loadingOverlay").style.display = "flex";
-            document.getElementById("loadingOverlay").querySelector(".loading-text").textContent = "Loading organizations data...";
-            
-            let allOrganizations = [];
-            let loadedTypes = 0;
-            const totalTypes = Object.keys(organizationTypes).length;
-            
-            // Process each organization type
-            for (const type in organizationTypes) {
-              try {
-                document.getElementById("loadingOverlay").querySelector(".loading-text").textContent = 
-                  `Loading ${organizationTypes[type].name}...`;
-                
-                // Update progress
-                const progress = (loadedTypes / totalTypes) * 100;
-                document.getElementById("progressBar").style.width = `${progress}%`;
-                
-                // Load and parse CSV data from embedded data
-                if (csvData[type]) {
-                  const orgs = await loadCSVFromString(csvData[type], type);
-                  orgData[type] = orgs;
-                  allOrganizations = allOrganizations.concat(orgs);
-                  debugLog(`Loaded ${orgs.length} organizations from ${type} data`);
-                } else {
-                  debugLog(`No CSV data found for ${type}`);
-                }
-                
-                loadedTypes++;
-              } catch (error) {
-                debugLog(`Error loading ${type} data: ${error.message}`);
-              }
-            }
-            
-            // Update progress to 100%
-            document.getElementById("progressBar").style.width = "100%";
-            
-            // Combine all data
-            organizations = allOrganizations;
-            
-            debugLog(`Loaded ${organizations.length} organizations from all data sources`);
-            
-            // Process all the organizations
-            await processOrganizations();
-          } catch (error) {
-            debugLog(`Error loading CSV data: ${error.message}`);
-            document.getElementById("loadingOverlay").style.display = "none";
-          }
-        }
-        
         // Add a test marker to verify the graphics layer is working
         function addTestMarker() {
           try {
@@ -3215,6 +1694,26 @@ require([
           }
         }
         
+        // Extend processOrganizations to also create markers
+        async function processAndDisplayOrganizations() {
+          try {
+            // Process organization data
+            await processOrganizations();
+            
+            // Create city markers based on the processed data
+            const markersCreated = await createCityMarkers();
+            
+            // Update info panel
+            updateInfoPanel();
+            
+            return markersCreated;
+          } catch (error) {
+            debugLog(`Error in processAndDisplayOrganizations: ${error.message}`);
+            document.getElementById("loadingOverlay").style.display = "none";
+            return 0;
+          }
+        }
+        
         // Set up click handler for graphics
         view.on("click", function(event) {
           view.hitTest(event).then(function(response) {
@@ -3229,93 +1728,6 @@ require([
             }
           });
         });
-        
-        // Handle filter buttons - Revenue
-        document.getElementById("filterAll").addEventListener("click", function() {
-          currentFilter = 'all';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(2) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterLarge").addEventListener("click", function() {
-          currentFilter = 'large';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(2) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterMed").addEventListener("click", function() {
-          currentFilter = 'med';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(2) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterSmall").addEventListener("click", function() {
-          currentFilter = 'small';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(2) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        // Handle filter buttons - Organization Type
-        document.getElementById("filterAllTypes").addEventListener("click", function() {
-          currentTypeFilter = 'all';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterLand").addEventListener("click", function() {
-          currentTypeFilter = 'Land';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterWater").addEventListener("click", function() {
-          currentTypeFilter = 'Water';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterAgri").addEventListener("click", function() {
-          currentTypeFilter = 'Agriculture';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterBusiness").addEventListener("click", function() {
-          currentTypeFilter = 'Business';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterEnv").addEventListener("click", function() {
-          currentTypeFilter = 'Environment';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterLabor").addEventListener("click", function() {
-          currentTypeFilter = 'Labor';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
-        document.getElementById("filterFarm").addEventListener("click", function() {
-          currentTypeFilter = 'Farm';
-          setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
-          filterGraphics();
-          updateInfoPanel(selectedCity);
-        });
-        
         // Helper function to set active filter button
         function setActiveFilterButton(button, buttonGroup) {
           const buttons = buttonGroup || document.querySelectorAll(".filter-btn");
@@ -3325,23 +1737,111 @@ require([
           button.classList.add("active");
         }
         
-        // Reset view button
-        document.getElementById("resetViewBtn").addEventListener("click", function() {
-          view.goTo(caExtent);
-          selectedCity = null;
-          updateInfoPanel();
-        });
-        
-        // Reset cache button
-        document.getElementById("resetCacheBtn").addEventListener("click", function() {
-          if (confirm("This will reset your geocode cache. Continue?")) {
-            if (resetGeocodeCache()) {
-              alert("Geocache reset. Reloading the map...");
-              location.reload();
+        // Set up event handlers for UI controls
+        function setupEventHandlers() {
+          // Handle filter buttons - Revenue
+          document.getElementById("filterAll").addEventListener("click", function() {
+            currentFilter = 'all';
+            setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(2) .filter-btn"));
+            filterGraphics();
+            updateInfoPanel(selectedCity);
+          });
+          
+          document.getElementById("filterLarge").addEventListener("click", function() {
+            currentFilter = 'large';
+            setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(2) .filter-btn"));
+            filterGraphics();
+            updateInfoPanel(selectedCity);
+          });
+          
+          document.getElementById("filterMed").addEventListener("click", function() {
+            currentFilter = 'med';
+            setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(2) .filter-btn"));
+            filterGraphics();
+            updateInfoPanel(selectedCity);
+          });
+          
+          document.getElementById("filterSmall").addEventListener("click", function() {
+            currentFilter = 'small';
+            setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(2) .filter-btn"));
+            filterGraphics();
+            updateInfoPanel(selectedCity);
+          });
+          
+          // Handle filter buttons - Organization Type
+          document.getElementById("filterAllTypes").addEventListener("click", function() {
+            currentTypeFilter = 'all';
+            setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
+            filterGraphics();
+            updateInfoPanel(selectedCity);
+          });
+          
+          document.getElementById("filterLand").addEventListener("click", function() {
+            currentTypeFilter = 'Land';
+            setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
+            filterGraphics();
+            updateInfoPanel(selectedCity);
+          });
+          
+          document.getElementById("filterWater").addEventListener("click", function() {
+            currentTypeFilter = 'Water';
+            setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
+            filterGraphics();
+            updateInfoPanel(selectedCity);
+          });
+          
+          document.getElementById("filterAgri").addEventListener("click", function() {
+            currentTypeFilter = 'Agriculture';
+            setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
+            filterGraphics();
+            updateInfoPanel(selectedCity);
+          });
+          
+          document.getElementById("filterBusiness").addEventListener("click", function() {
+            currentTypeFilter = 'Business';
+            setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
+            filterGraphics();
+            updateInfoPanel(selectedCity);
+          });
+          
+          document.getElementById("filterEnv").addEventListener("click", function() {
+            currentTypeFilter = 'Environment';
+            setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
+            filterGraphics();
+            updateInfoPanel(selectedCity);
+          });
+          
+          document.getElementById("filterLabor").addEventListener("click", function() {
+            currentTypeFilter = 'Labor';
+            setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
+            filterGraphics();
+            updateInfoPanel(selectedCity);
+          });
+          
+          document.getElementById("filterFarm").addEventListener("click", function() {
+            currentTypeFilter = 'Farm';
+            setActiveFilterButton(this, document.querySelectorAll(".filter-group:nth-child(1) .filter-btn"));
+            filterGraphics();
+            updateInfoPanel(selectedCity);
+          });
+          
+          // Reset view button
+          document.getElementById("resetViewBtn").addEventListener("click", function() {
+            view.goTo(caExtent);
+            selectedCity = null;
+            updateInfoPanel();
+          });
+          
+          // Reset cache button
+          document.getElementById("resetCacheBtn").addEventListener("click", function() {
+            if (confirm("This will reset your geocode cache. Continue?")) {
+              if (resetGeocodeCache()) {
+                alert("Geocache reset. Reloading the map...");
+                location.reload();
+              }
             }
-          }
-        });
-        
+          });
+        }
         // Initialize the application when view is ready
         view.when(function() {
           debugLog("Map view initialized");
@@ -3352,8 +1852,21 @@ require([
           // Add a test marker to verify the graphics layer is working
           addTestMarker();
           
-          // Load all the CSV data
-          loadAllCSVData();
+          // Set up event handlers
+          setupEventHandlers();
+          
+          // Load the CSV data and display organizations
+          loadAllCSVData()
+            .then(() => createCityMarkers())
+            .then(() => {
+              // Update info panel after all data is loaded and markers are created
+              updateInfoPanel();
+              debugLog("Map initialization complete");
+            })
+            .catch(error => {
+              debugLog(`Error initializing map data: ${error.message}`);
+              document.getElementById("loadingOverlay").style.display = "none";
+            });
         });
       } catch (error) {
         debugLog(`Error initializing map: ${error.message}`);
