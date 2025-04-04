@@ -872,6 +872,76 @@ Center for Workers' Rights,47-2846161,501(c)(3),Sacramento,CA,$869688`
     function getTypeColor(orgType) {
       return organizationTypes[orgType]?.color || [128, 128, 128, 0.8]; // Default gray
     }
+
+    // Add this function declaration before processOrganizations
+function updateStatisticsPanel() {
+  const typeBreakdownDiv = document.getElementById("typeBreakdown");
+  const fundingBreakdownDiv = document.getElementById("fundingBreakdown");
+  
+  // Clear existing content
+  typeBreakdownDiv.innerHTML = "<h4>Organizations by Type</h4>";
+  fundingBreakdownDiv.innerHTML = "<h4>Funding by Type</h4>";
+  
+  // Count orgs and funding by type
+  const typeStats = {};
+  let totalCount = 0;
+  let totalFunding = 0;
+  
+  for (const type in organizationTypes) {
+    typeStats[type] = {
+      count: 0,
+      funding: 0
+    };
+  }
+  
+  organizations.forEach(org => {
+    const type = org.OrgType;
+    const revenue = parseRevenue(org["Total revenues"]);
+    
+    if (typeStats[type]) {
+      typeStats[type].count++;
+      typeStats[type].funding += revenue;
+    }
+    
+    totalCount++;
+    totalFunding += revenue;
+  });
+  
+  // Display org count statistics
+  for (const type in typeStats) {
+    if (typeStats[type].count > 0) {
+      const typeInfo = organizationTypes[type];
+      const percentage = ((typeStats[type].count / totalCount) * 100).toFixed(1);
+      const rgbColor = `rgb(${typeInfo.color[0]}, ${typeInfo.color[1]}, ${typeInfo.color[2]})`;
+      
+      const typeItem = document.createElement("div");
+      typeItem.className = "funding-stat";
+      typeItem.innerHTML = `
+        <span class="type-indicator" style="background-color: ${rgbColor};"></span>
+        ${typeInfo.name}: ${typeStats[type].count} orgs (${percentage}%)
+      `;
+      typeBreakdownDiv.appendChild(typeItem);
+    }
+  }
+  
+  // Display funding statistics
+  for (const type in typeStats) {
+    if (typeStats[type].funding > 0) {
+      const typeInfo = organizationTypes[type];
+      const percentage = ((typeStats[type].funding / totalFunding) * 100).toFixed(1);
+      const rgbColor = `rgb(${typeInfo.color[0]}, ${typeInfo.color[1]}, ${typeInfo.color[2]})`;
+      
+      const fundingItem = document.createElement("div");
+      fundingItem.className = "funding-stat";
+      fundingItem.innerHTML = `
+        <span class="type-indicator" style="background-color: ${rgbColor};"></span>
+        ${typeInfo.name}: ${formatRevenue(typeStats[type].funding)} (${percentage}%)
+      `;
+      fundingBreakdownDiv.appendChild(fundingItem);
+    }
+  }
+}
+    
     // Function to get GitHub URL for a CSV file
     function getGitHubUrl(baseFileName) {
       return githubBaseUrl + baseFileName;
