@@ -39,32 +39,66 @@
       padding: 15px;
     }
     
-    #legendPanel {
-      position: absolute;
-      bottom: 30px;
-      left: 20px;
-      z-index: 99;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      padding: 15px;
-      max-width: 280px;
-    }
-    
-    #debugPanel {
-      position: absolute;
-      bottom: 30px;
-      right: 20px;
-      z-index: 99;
-      background-color: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-      padding: 15px;
-      max-width: 300px;
-      max-height: 200px;
-      overflow: auto;
-      font-size: 12px;
-    }
+   /* Updated CSS for both panels */
+#legendPanel {
+  position: absolute;
+  bottom: 250px; /* Increased significantly to avoid overlap with all buttons */
+  left: 20px;
+  z-index: 99;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  padding: 15px;
+  max-width: 280px;
+}
+
+#debugPanel {
+  position: absolute;
+  bottom: 30px;
+  right: 20px;
+  z-index: 99;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  padding: 15px;
+  max-width: 300px;
+  max-height: 200px;
+  overflow: auto;
+  font-size: 12px;
+  transition: max-height 0.3s ease;
+}
+
+.debug-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  cursor: default;
+}
+
+/* Added for minimized state */
+#debugPanel.minimized {
+  max-height: 40px;
+  overflow: hidden;
+}
+
+#debugPanel.minimized #debugContent {
+  display: none;
+}
+
+#minimizeDebugBtn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #0079c1;
+  padding: 0 5px;
+  line-height: 1;
+}
+
+#minimizeDebugBtn:hover {
+  color: #005e95;
+}
     
     .legend-item {
       display: flex;
