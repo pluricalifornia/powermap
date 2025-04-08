@@ -1945,8 +1945,22 @@ function updateStatisticsPanel() {
               if (resetGeocodeCache()) {
                 alert("Geocache reset. Reloading the map...");
                 location.reload();
-              }
-            }
+          });
+
+          // Add this new code at the end of the function
+        document.getElementById("minimizeDebugBtn").addEventListener("click", function() {
+          const debugPanel = document.getElementById("debugPanel");
+            const btn = document.getElementById("minimizeDebugBtn");
+    
+            if (debugPanel.classList.contains("minimized")) {
+            // Expand
+            debugPanel.classList.remove("minimized");
+            btn.textContent = "−"; // Minus sign
+            } else {
+            // Minimize
+            debugPanel.classList.add("minimized");
+            btn.textContent = "+"; // Plus sign
+          }
           });
         }
         // Initialize the application when view is ready
