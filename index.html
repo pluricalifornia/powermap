@@ -38,7 +38,54 @@
       overflow-y: auto;
       padding: 15px;
     }
-    
+
+    .search-container {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+#orgSearchInput {
+  flex-grow: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px 0 0 4px;
+  font-size: 14px;
+}
+
+#orgSearchBtn {
+  background-color: #0079c1;
+  color: white;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+#orgSearchBtn:hover {
+  background-color: #005e95;
+}
+
+.search-icon {
+  font-style: normal;
+}
+
+.search-results {
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #eee;
+}
+
+.search-result-count {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.highlight {
+  background-color: #ffffa0;
+  font-weight: bold;
+}
    /* Updated CSS for both panels */
 #legendPanel {
   position: absolute;
@@ -370,6 +417,11 @@
     <div class="title-bar">
       <h2 style="margin: 0; font-size: 1.2em;">California Land Stakeholder Power Map</h2>
     </div>
+
+    <div class="search-container">
+  <input type="text" id="orgSearchInput" placeholder="Search organizations...">
+  <button id="orgSearchBtn"><i class="search-icon">🔍</i></button>
+</div>
     
     <div class="stats-container">
       <div class="stat-box">
@@ -1853,6 +1905,194 @@ function updateStatisticsPanel() {
             filterGraphics();
             updateInfoPanel(selectedCity);
           });
+
+          // Add this to your setupEventHandlers function
+function setupSearchFunctionality() {
+  const searchInput = document.getElementById("orgSearchInput");
+  const searchBtn = document.getElementById("orgSearchBtn");
+  
+  // Search function
+  function performSearch() {
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    
+    if (searchTerm.length < 2) {
+      alert("Please enter at least 2 characters to search");
+      return;
+    }
+    
+    // Clear existing search results
+    const existingResults = document.querySelector(".search-results");
+    if (existingResults) {
+      existingResults.remove();
+    }
+    
+    // Find matching organizations
+    const matchingOrgs = organizations.filter(org => 
+      org.Name.toLowerCase().includes(searchTerm) ||
+      (org.City && org.City.toLowerCase().includes(searchTerm)) ||
+      (org["IRS 501(c) type"] && org["IRS 501(c) type"].toLowerCase().includes(searchTerm))
+    );
+    
+    // Create results element
+    const resultsDiv = document.createElement("div");
+    resultsDiv.className = "search-results";
+    
+    // Show results count
+    const countDiv = document.createElement("div");
+    countDiv.className = "search-result-count";
+    countDiv.textContent = `Found ${matchingOrgs.length} matching organizations`;
+    resultsDiv.appendChild(countDiv);
+    
+    // If no results
+    if (matchingOrgs.length === 0) {
+      const noResults = document.createElement("div");
+      noResults.textContent = "No organizations found matching your search.";
+      resultsDiv.appendChild(noResults);
+    } else {
+      // Sort by revenue (highest first)
+      matchingOrgs.sort((a, b) => parseRevenue(b["Total revenues"]) - parseRevenue(a["Total revenues"]));
+      
+      // Add results (limit to 10 for performance)
+      const limit = Math.min(matchingOrgs.length, 10);
+      for (let i = 0; i < limit; i++) {
+        const org = matchingOrgs[i];
+        const orgItem = document.createElement("div");
+        orgItem.className = "org-item";
+        
+        // Get color for organization type
+        const typeColor = getTypeColor(org.OrgType);
+        const rgbColor = `rgb(${typeColor[0]}, ${typeColor[1]}, ${typeColor[2]})`;
+        
+        // Highlight search term
+        let orgName = org.Name;
+        if (orgName.toLowerCase().includes(searchTerm)) {
+          const index = orgName.toLowerCase().indexOf(searchTerm);
+          orgName = 
+            orgName.substring(0, index) + 
+            `<span class="highlight">${orgName.substring(index, index + searchTerm.length)}</span>` + 
+            orgName.substring(index + searchTerm.length);
+        }
+        
+        // Include type indicator
+        const typeIndicator = `<span class="type-indicator" style="background-color: ${rgbColor};"></span>`;
+        
+        orgItem.innerHTML = `
+          <div class="org-name">${typeIndicator}${orgName}</div>
+          <div>${org["Total revenues"]}</div>
+          <div>${org.City}, ${org.State}</div>
+        `;
+        
+        // Make clickable to zoom to city
+        orgItem.style.cursor = "pointer";
+        orgItem.onclick = function() {
+          // Zoom to organization's city
+          const city = org.City;
+          if (city && geocodeCache[city]) {
+            const point = new Point({
+              longitude: geocodeCache[city][0],
+              latitude: geocodeCache[city][1]
+            });
+            
+            view.goTo({
+              target: point,
+              zoom: 10
+            }, { duration: 1000 });
+            
+            // Update info panel for this city
+            selectedCity = city;
+            updateInfoPanel(city);
+          }
+        };
+        
+        resultsDiv.appendChild(orgItem);
+      }
+      
+      // Add "Show more" link if there are more than 10 results
+      if (matchingOrgs.length > 10) {
+        const showMoreLink = document.createElement("div");
+        showMoreLink.style.textAlign = "center";
+        showMoreLink.style.marginTop = "10px";
+        showMoreLink.innerHTML = `<a href="#" style="color: #0079c1;">Show all ${matchingOrgs.length} results</a>`;
+        
+        showMoreLink.onclick = function(e) {
+          e.preventDefault();
+          
+          // Remove limit and show all results
+          resultsDiv.removeChild(showMoreLink);
+          
+          for (let i = 10; i < matchingOrgs.length; i++) {
+            const org = matchingOrgs[i];
+            const orgItem = document.createElement("div");
+            orgItem.className = "org-item";
+            
+            // Get color for organization type
+            const typeColor = getTypeColor(org.OrgType);
+            const rgbColor = `rgb(${typeColor[0]}, ${typeColor[1]}, ${typeColor[2]})`;
+            
+            // Highlight search term
+            let orgName = org.Name;
+            if (orgName.toLowerCase().includes(searchTerm)) {
+              const index = orgName.toLowerCase().indexOf(searchTerm);
+              orgName = 
+                orgName.substring(0, index) + 
+                `<span class="highlight">${orgName.substring(index, index + searchTerm.length)}</span>` + 
+                orgName.substring(index + searchTerm.length);
+            }
+            
+            // Include type indicator
+            const typeIndicator = `<span class="type-indicator" style="background-color: ${rgbColor};"></span>`;
+            
+            orgItem.innerHTML = `
+              <div class="org-name">${typeIndicator}${orgName}</div>
+              <div>${org["Total revenues"]}</div>
+              <div>${org.City}, ${org.State}</div>
+            `;
+            
+            // Make clickable to zoom to city
+            orgItem.style.cursor = "pointer";
+            orgItem.onclick = function() {
+              // Zoom to organization's city
+              const city = org.City;
+              if (city && geocodeCache[city]) {
+                const point = new Point({
+                  longitude: geocodeCache[city][0],
+                  latitude: geocodeCache[city][1]
+                });
+                
+                view.goTo({
+                  target: point,
+                  zoom: 10
+                }, { duration: 1000 });
+                
+                // Update info panel for this city
+                selectedCity = city;
+                updateInfoPanel(city);
+              }
+            };
+            
+            resultsDiv.appendChild(orgItem);
+          }
+        };
+        
+        resultsDiv.appendChild(showMoreLink);
+      }
+    }
+    
+    // Insert results after search container
+    const searchContainer = document.querySelector(".search-container");
+    searchContainer.parentNode.insertBefore(resultsDiv, searchContainer.nextSibling);
+  }
+  
+  // Add event listener for search button
+  searchBtn.addEventListener("click", performSearch);
+  
+  // Add event listener for Enter key
+  searchInput.addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+      performSearch();
+    }
+  });
+}
           
           document.getElementById("filterLarge").addEventListener("click", function() {
             currentFilter = 'large';
@@ -1999,6 +2239,7 @@ function updateStatisticsPanel() {
         document.getElementById("loadingOverlay").style.display = "none";
       }
     });
+    setupSearchFunctionality();
   </script>
 </body>
 </html>
