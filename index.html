@@ -2531,9 +2531,8 @@ function setupSearchFunctionality() {
               // Update info panel after all data is loaded and markers are created
               updateInfoPanel();
               debugLog("Map initialization complete");
-            // Add the call to setupMobileResponsiveness() here
-            setupMobileResponsiveness();
-          })
+              setupMobileResponsiveness();
+            })
             .catch(error => {
             debugLog(`Error initializing map data: ${error.message}`);
             document.getElementById("loadingOverlay").style.display = "none";
