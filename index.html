@@ -410,52 +410,106 @@
 
     /* Mobile Responsive Styles */
 @media screen and (max-width: 768px) {
-  /* Optimize info panel size for mobile while keeping position */
+  /* Make info panel significantly smaller for mobile */
   #infoPanel {
-    width: 280px; /* Slightly narrower than desktop */
-    max-width: 80%; /* Ensure it doesn't take up too much width */
-    top: 20px; /* Keep at top */
-    right: 20px; /* Keep at right */
+    width: 220px; /* Much narrower */
+    max-width: 70%; /* Ensure it doesn't take up too much width */
+    top: 10px; /* Closer to top edge */
+    right: 10px; /* Closer to right edge */
     bottom: auto; /* Reset the bottom positioning */
     left: auto; /* Reset the left positioning */
-    border-radius: 8px; /* Restore original border radius */
-    max-height: 60vh; /* Limit height to preserve map visibility */
+    border-radius: 6px; /* Slightly smaller border radius */
+    max-height: 50vh; /* More limited height to preserve map visibility */
     transform: none !important; /* Prevent any transformations */
-    padding: 12px; /* Slightly less padding to fit more content */
+    padding: 8px; /* Reduced padding */
+    font-size: 0.9em; /* Slightly smaller text overall */
   }
   
-  /* Optimize internal elements for better fit */
+  /* Smaller title bar */
   #infoPanel .title-bar {
-    padding: 8px 10px;
+    padding: 6px 8px;
+    margin: -8px -8px 8px -8px; /* Adjust margins to match new padding */
   }
   
   #infoPanel .title-bar h2 {
+    font-size: 0.9em;
+  }
+  
+  /* Compact search input */
+  #infoPanel .search-container {
+    margin-bottom: 6px;
+  }
+  
+  #orgSearchInput {
+    padding: 4px 8px;
+    font-size: 0.85em;
+  }
+  
+  #orgSearchBtn {
+    padding: 4px 8px;
+  }
+  
+  /* Very compact stats boxes */
+  #infoPanel .stats-container {
+    margin-bottom: 6px;
+  }
+  
+  #infoPanel .stat-box {
+    padding: 4px;
+    min-width: 50px; /* Allow smaller boxes */
+  }
+  
+  #infoPanel .stat-value {
     font-size: 1em;
   }
   
-  /* Make search input more compact */
-  #infoPanel .search-container {
-    margin-bottom: 10px;
+  #infoPanel .stat-label {
+    font-size: 0.7em;
   }
   
-  /* Adjust stats boxes to fit better */
-  #infoPanel .stat-box {
-    padding: 6px;
+  /* Smaller tabs */
+  #infoPanel .tab-container {
+    margin-bottom: 6px;
   }
   
-  /* Slightly smaller tab buttons */
   #infoPanel .tab-button {
-    padding: 6px 10px;
+    padding: 4px 6px;
+    font-size: 0.75em;
+  }
+  
+  /* Compact filter buttons */
+  #infoPanel .filter-btn {
+    padding: 3px 5px;
+    margin: 2px;
+    font-size: 0.7em;
+  }
+  
+  /* Reduce margin around filter groups */
+  #infoPanel .filter-group {
+    margin-bottom: 5px;
+  }
+  
+  #infoPanel .filter-label {
+    font-size: 0.8em;
+    margin-bottom: 2px;
+  }
+  
+  /* Make organization items smaller */
+  #infoPanel .org-item {
+    padding: 4px 0;
+  }
+  
+  #infoPanel .org-name {
+    font-size: 0.9em;
   }
 }
 
 /* For very small screens (phones) */
 @media screen and (max-width: 480px) {
   #infoPanel {
-    width: 260px;
-    max-width: 85%;
-    right: 10px; /* Move slightly closer to edge */
-    max-height: 70vh; /* Allow a bit more height on very small screens */
+    width: 200px; /* Even smaller on very small screens */
+    max-width: 75%;
+    font-size: 0.85em;
   }
 }
   
