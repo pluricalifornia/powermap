@@ -1540,36 +1540,36 @@ function setupMobileResponsiveness() {
   }
   
 // Handle orientation changes and window resizing correctly
-let resizeTimeout;
+  let resizeTimeout;
   
-function handleResize() {
+  function handleResize() {
   // Clear previous timeout to prevent multiple rapid resizes
-  clearTimeout(resizeTimeout);
+    clearTimeout(resizeTimeout);
   
   // Use a timeout to avoid excessive updates
-  resizeTimeout = setTimeout(function() {
-    if (view) {
-      try {
+    resizeTimeout = setTimeout(function() {
+      if (view) {
+        try {
         // Try the standard approach first
-        if (typeof view.resize === 'function') {
-          view.resize();
-          debugLog("Map view resized with view.resize()");
+          if (typeof view.resize === 'function') {
+            view.resize();
+            debugLog("Map view resized with view.resize()");
         } 
         // Alternative approach - trigger window resize event which ArcGIS will detect
-        else {
-          debugLog("Using fallback resize approach");
+          else {
+            debugLog("Using fallback resize approach");
           // Get the view container and update its dimensions
-          const viewDiv = document.getElementById("viewDiv");
-          if (viewDiv) {
+            const viewDiv = document.getElementById("viewDiv");
+            if (viewDiv) {
             // This forces the map to redraw by making the container adapt to window
-            viewDiv.style.height = '100%';
-            viewDiv.style.width = '100%';
+              viewDiv.style.height = '100%';
+              viewDiv.style.width = '100%';
           }
           
           // Force ArcGIS to recognize the container size change
-          if (typeof window.dispatchEvent === 'function') {
-            window.dispatchEvent(new Event('resize'));
-            debugLog("Dispatched window resize event");
+            if (typeof window.dispatchEvent === 'function') {
+              window.dispatchEvent(new Event('resize'));
+              debugLog("Dispatched window resize event");
           }
         }
       } catch (e) {
