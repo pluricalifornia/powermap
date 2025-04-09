@@ -513,24 +513,79 @@
   }
 }
   
-  /* Legend Panel */
+  /* Make legend panel much smaller on mobile */
   #legendPanel {
-    left: 10px;
-    bottom: 60px;
-    max-width: 200px;
-    padding: 10px;
-    font-size: 0.85em;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    max-width: 120px; /* Significantly narrower */
+    padding: 6px; /* Reduced padding */
+    font-size: 0.75em; /* Smaller text size */
+    bottom: 50px; /* Position higher to avoid buttons */
+    left: 5px; /* Closer to edge */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2); /* Lighter shadow */
   }
   
-  .legend-item {
+  /* Smaller heading */
+  #legendPanel h3 {
+    font-size: 0.9em;
+    margin: 0 0 4px 0;
+  }
+  
+  #legendPanel h4 {
+    font-size: 0.8em;
+    margin: 3px 0;
+  }
+  
+  /* Smaller legend items */
+  #legendPanel .legend-item {
+    margin-bottom: 2px;
+  }
+  
+  #legendPanel .legend-color {
+    width: 10px;
+    height: 10px;
+    margin-right: 4px;
+  }
+  
+  #legendPanel .legend-text {
+    font-size: 0.75em;
+  }
+  
+  /* Smaller size legend circles */
+  #legendPanel .size-legend {
     margin-bottom: 5px;
+    padding-top: 5px;
+    margin-top: 5px;
   }
   
-  .legend-color {
-    width: 15px;
-    height: 15px;
+  #legendPanel .size-circle {
+    width: 16px !important;
+    height: 16px !important;
+    margin-right: 2px;
   }
+  
+  #legendPanel .size-circle:nth-child(2) {
+    width: 12px !important;
+    height: 12px !important;
+  }
+  
+  #legendPanel .size-circle:nth-child(3) {
+    width: 8px !important;
+    height: 8px !important;
+  }
+  
+  #legendPanel .size-label {
+    width: 35px;
+    font-size: 0.7em;
+  }
+}
+
+/* For very small screens */
+@media screen and (max-width: 480px) {
+  #legendPanel {
+    max-width: 100px; /* Even smaller on very small screens */
+    font-size: 0.7em;
+    bottom: 60px;
+  }
+}
   
   /* Debug Panel */
   #debugPanel {
