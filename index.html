@@ -2534,7 +2534,7 @@ function setupSearchFunctionality() {
             // Add the call to setupMobileResponsiveness() here
             setupMobileResponsiveness();
           })
-          .catch(error => {
+            .catch(error => {
             debugLog(`Error initializing map data: ${error.message}`);
             document.getElementById("loadingOverlay").style.display = "none";
         });
