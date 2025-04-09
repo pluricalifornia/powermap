@@ -2376,11 +2376,13 @@ function setupSearchFunctionality() {
               // Update info panel after all data is loaded and markers are created
               updateInfoPanel();
               debugLog("Map initialization complete");
-            })
-            .catch(error => {
-              debugLog(`Error initializing map data: ${error.message}`);
-              document.getElementById("loadingOverlay").style.display = "none";
-            });
+            // Add the call to setupMobileResponsiveness() here
+            setupMobileResponsiveness();
+          })
+          .catch(error => {
+            debugLog(`Error initializing map data: ${error.message}`);
+            document.getElementById("loadingOverlay").style.display = "none";
+        });
         });
       } catch (error) {
         debugLog(`Error initializing map: ${error.message}`);
