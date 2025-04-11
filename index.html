@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>California Land Stakeholder Power Map</title>
   
   <!-- Load the ArcGIS Maps SDK for JavaScript core API -->
@@ -407,254 +407,6 @@
       width: 0%;
       transition: width 0.3s ease;
     }
-
-    /* Mobile Responsive Styles */
-@media screen and (max-width: 768px) {
-  /* Make info panel significantly smaller for mobile */
-  #infoPanel {
-    width: 220px; /* Much narrower */
-    max-width: 70%; /* Ensure it doesn't take up too much width */
-    top: 10px; /* Closer to top edge */
-    right: 10px; /* Closer to right edge */
-    bottom: auto; /* Reset the bottom positioning */
-    left: auto; /* Reset the left positioning */
-    border-radius: 6px; /* Slightly smaller border radius */
-    max-height: 50vh; /* More limited height to preserve map visibility */
-    transform: none !important; /* Prevent any transformations */
-    padding: 8px; /* Reduced padding */
-    font-size: 0.9em; /* Slightly smaller text overall */
-  }
-  
-  /* Smaller title bar */
-  #infoPanel .title-bar {
-    padding: 6px 8px;
-    margin: -8px -8px 8px -8px; /* Adjust margins to match new padding */
-  }
-  
-  #infoPanel .title-bar h2 {
-    font-size: 0.9em;
-  }
-  
-  /* Compact search input */
-  #infoPanel .search-container {
-    margin-bottom: 6px;
-  }
-  
-  #orgSearchInput {
-    padding: 4px 8px;
-    font-size: 0.85em;
-  }
-  
-  #orgSearchBtn {
-    padding: 4px 8px;
-  }
-  
-  /* Very compact stats boxes */
-  #infoPanel .stats-container {
-    margin-bottom: 6px;
-  }
-  
-  #infoPanel .stat-box {
-    padding: 4px;
-    min-width: 50px; /* Allow smaller boxes */
-  }
-  
-  #infoPanel .stat-value {
-    font-size: 1em;
-  }
-  
-  #infoPanel .stat-label {
-    font-size: 0.7em;
-  }
-  
-  /* Smaller tabs */
-  #infoPanel .tab-container {
-    margin-bottom: 6px;
-  }
-  
-  #infoPanel .tab-button {
-    padding: 4px 6px;
-    font-size: 0.75em;
-  }
-  
-  /* Compact filter buttons */
-  #infoPanel .filter-btn {
-    padding: 3px 5px;
-    margin: 2px;
-    font-size: 0.7em;
-  }
-  
-  /* Reduce margin around filter groups */
-  #infoPanel .filter-group {
-    margin-bottom: 5px;
-  }
-  
-  #infoPanel .filter-label {
-    font-size: 0.8em;
-    margin-bottom: 2px;
-  }
-  
-  /* Make organization items smaller */
-  #infoPanel .org-item {
-    padding: 4px 0;
-  }
-  
-  #infoPanel .org-name {
-    font-size: 0.9em;
-  }
-}
-
-/* For very small screens (phones) */
-@media screen and (max-width: 480px) {
-  #infoPanel {
-    width: 200px; /* Even smaller on very small screens */
-    max-width: 75%;
-    font-size: 0.85em;
-  }
-}
-  
-  /* Make legend panel much smaller on mobile */
-  #legendPanel {
-    max-width: 120px; /* Significantly narrower */
-    padding: 6px; /* Reduced padding */
-    font-size: 0.75em; /* Smaller text size */
-    bottom: 50px; /* Position higher to avoid buttons */
-    left: 5px; /* Closer to edge */
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2); /* Lighter shadow */
-  }
-  
-  /* Smaller heading */
-  #legendPanel h3 {
-    font-size: 0.9em;
-    margin: 0 0 4px 0;
-  }
-  
-  #legendPanel h4 {
-    font-size: 0.8em;
-    margin: 3px 0;
-  }
-  
-  /* Smaller legend items */
-  #legendPanel .legend-item {
-    margin-bottom: 2px;
-  }
-  
-  #legendPanel .legend-color {
-    width: 10px;
-    height: 10px;
-    margin-right: 4px;
-  }
-  
-  #legendPanel .legend-text {
-    font-size: 0.75em;
-  }
-  
-  /* Smaller size legend circles */
-  #legendPanel .size-legend {
-    margin-bottom: 5px;
-    padding-top: 5px;
-    margin-top: 5px;
-  }
-  
-  #legendPanel .size-circle {
-    width: 16px !important;
-    height: 16px !important;
-    margin-right: 2px;
-  }
-  
-  #legendPanel .size-circle:nth-child(2) {
-    width: 12px !important;
-    height: 12px !important;
-  }
-  
-  #legendPanel .size-circle:nth-child(3) {
-    width: 8px !important;
-    height: 8px !important;
-  }
-  
-  #legendPanel .size-label {
-    width: 35px;
-    font-size: 0.7em;
-  }
-}
-
-/* For very small screens */
-@media screen and (max-width: 480px) {
-  #legendPanel {
-    max-width: 100px; /* Even smaller on very small screens */
-    font-size: 0.7em;
-    bottom: 60px;
-  }
-}
-  
-  /* Debug Panel */
-  #debugPanel {
-    bottom: 10px;
-    right: 10px;
-    max-width: 200px;
-    max-height: 150px;
-    font-size: 10px;
-  }
-  
-  /* Control Buttons */
-  #resetViewBtn, #resetCacheBtn {
-    bottom: 10px;
-    left: 10px;
-    padding: 8px 10px;
-    font-size: 0.8em;
-  }
-  
-  #resetCacheBtn {
-    bottom: 50px;
-  }
-  
-  /* Search */
-  .search-container {
-    margin-bottom: 10px;
-  }
-  
-  #orgSearchInput {
-    padding: 6px 8px;
-    font-size: 13px;
-  }
-  
-  #orgSearchBtn {
-    padding: 6px 8px;
-  }
-  
-  /* Compact formatting for organization items */
-  .org-item {
-    padding: 5px 0;
-  }
-}
-
-/* For very small screens */
-@media screen and (max-width: 480px) {
-  #infoPanel {
-    width: 100%;
-  }
-  
-  .filter-btn {
-    padding: 4px 6px;
-    font-size: 0.7em;
-  }
-  
-  .tab-button {
-    padding: 6px 8px;
-    font-size: 0.8em;
-  }
-  
-  #legendPanel {
-    font-size: 0.8em;
-    max-width: 160px;
-    bottom: 50px;
-  }
-  
-  /* Hide the debug panel on very small screens */
-  #debugPanel {
-    display: none;
-  }
-}
   </style>
 </head>
 
@@ -1532,7 +1284,6 @@ function updateStatisticsPanel() {
         console.error(error);
       }
     }
-    
     // Use the AMD pattern as recommended by ArcGIS
     require([
       "esri/Map", 
@@ -1869,143 +1620,6 @@ function updateStatisticsPanel() {
             orgsListElement.appendChild(orgItem);
           });
         }
-
-      function setupMobileResponsiveness() {
-        // Check if we're on a mobile device (rough check)
-        const isMobile = window.innerWidth <= 768;
-        
-        if (isMobile) {
-          debugLog("Setting up mobile interface");
-          
-          // Add handle to info panel for dragging
-          const infoPanel = document.getElementById("infoPanel");
-          const handle = document.createElement("div");
-          handle.className = "panel-handle";
-          
-          // Insert at the beginning of info panel (after title bar)
-          const titleBar = infoPanel.querySelector(".title-bar");
-          if (titleBar) {
-            titleBar.after(handle);
-          } else {
-            infoPanel.prepend(handle);
-          }
-          
-          // Minimize panel by default
-          infoPanel.classList.add("minimized");
-          
-          // Toggle panel on handle click
-          handle.addEventListener("click", function() {
-            infoPanel.classList.toggle("minimized");
-          });
-          
-          // Implement simple touch handling for the panel
-          let startY = 0;
-          let startHeight = 0;
-          
-          handle.addEventListener("touchstart", function(e) {
-            startY = e.touches[0].clientY;
-            
-            // If panel is minimized, fully expand it when starting to drag
-            if (infoPanel.classList.contains("minimized")) {
-              infoPanel.classList.remove("minimized");
-            }
-            
-            e.preventDefault(); // Prevent scrolling while dragging
-          });
-          
-          handle.addEventListener("touchmove", function(e) {
-            const deltaY = e.touches[0].clientY - startY;
-            
-            // Convert deltaY to a percentage of the viewport height
-            const percentage = Math.min(Math.max((deltaY / window.innerHeight) * 100, 0), 40);
-            
-            // Apply transform based on delta
-            if (deltaY > 10) { // Small threshold to prevent accidental movement
-              infoPanel.style.transform = `translateY(${percentage}%)`;
-            } else {
-              infoPanel.style.transform = "translateY(0)";
-            }
-            
-            e.preventDefault();
-          });
-          
-          handle.addEventListener("touchend", function(e) {
-            const computedStyle = window.getComputedStyle(infoPanel);
-            const transform = computedStyle.getPropertyValue("transform");
-            
-            // Get current Y translation
-            let translateY = 0;
-            if (transform !== "none") {
-              const matrix = new DOMMatrix(transform);
-              translateY = matrix.m42;
-            }
-            
-            // If dragged more than 25% down, minimize the panel
-            if (translateY > window.innerHeight * 0.25) {
-              infoPanel.classList.add("minimized");
-            } else {
-              infoPanel.classList.remove("minimized");
-            }
-            
-            // Reset inline transform
-            infoPanel.style.transform = "";
-            
-            e.preventDefault();
-          });
-          
-          // Adjust legend and buttons positioning
-          const legendPanel = document.getElementById("legendPanel");
-          if (legendPanel) {
-            legendPanel.style.bottom = "60px";
-          }
-          
-          // Move reset buttons
-          const resetViewBtn = document.getElementById("resetViewBtn");
-          const resetCacheBtn = document.getElementById("resetCacheBtn");
-          
-          if (resetViewBtn) resetViewBtn.style.bottom = "10px";
-          if (resetCacheBtn) resetCacheBtn.style.bottom = "50px";
-          
-          // Reposition debug panel
-          const debugPanel = document.getElementById("debugPanel");
-          if (debugPanel) {
-            debugPanel.style.maxHeight = "100px";
-            debugPanel.style.fontSize = "10px";
-          }
-        }
-        
-        // Handle orientation changes and window resizing correctly
-        let resizeTimeout;
-        
-        function handleResize() {
-          // Clear previous timeout to prevent multiple rapid resizes
-          clearTimeout(resizeTimeout);
-          
-          // Use a timeout to avoid excessive updates
-          resizeTimeout = setTimeout(function() {
-            if (view) {
-              try {
-                // Force ArcGIS to recognize the container size change
-                if (typeof window.dispatchEvent === 'function') {
-                  window.dispatchEvent(new Event('resize'));
-                  debugLog("Dispatched window resize event");
-                }
-              } catch (e) {
-                debugLog("Error during resize: " + e.message);
-              }
-            }
-          }, 100);
-        }
-        
-        // Listen for orientation changes
-        window.addEventListener("orientationchange", function() {
-          debugLog("Orientation changed");
-          handleResize();
-        });
-        
-        // Listen for window resize events
-        window.addEventListener("resize", handleResize);
-      }
         // Function to update statistics panel
         function updateStatisticsPanel() {
           const typeBreakdownDiv = document.getElementById("typeBreakdown");
@@ -2613,12 +2227,11 @@ function setupSearchFunctionality() {
               // Update info panel after all data is loaded and markers are created
               updateInfoPanel();
               debugLog("Map initialization complete");
-              setupMobileResponsiveness();
             })
             .catch(error => {
-            debugLog(`Error initializing map data: ${error.message}`);
-            document.getElementById("loadingOverlay").style.display = "none";
-          });
+              debugLog(`Error initializing map data: ${error.message}`);
+              document.getElementById("loadingOverlay").style.display = "none";
+            });
         });
       } catch (error) {
         debugLog(`Error initializing map: ${error.message}`);
@@ -2630,4 +2243,3 @@ function setupSearchFunctionality() {
     });
   </script>
 </body>
-</html>
